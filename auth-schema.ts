@@ -1,7 +1,8 @@
 import { relations } from "drizzle-orm/_relations";
 import { pgTable, text, timestamp, boolean, index } from "drizzle-orm/pg-core";
 
-export const user = pgTable("user", {
+type User = typeof user.$inferSelect;
+const user = pgTable("user", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
@@ -15,7 +16,8 @@ export const user = pgTable("user", {
   displayUsername: text("display_username"),
 });
 
-export const session = pgTable(
+type Session = typeof session.$inferSelect;
+const session = pgTable(
   "session",
   {
     id: text("id").primaryKey(),
@@ -34,7 +36,8 @@ export const session = pgTable(
   (table) => [index("session_userId_idx").on(table.userId)],
 );
 
-export const account = pgTable(
+type Account = typeof account.$inferSelect;
+const account = pgTable(
   "account",
   {
     id: text("id").primaryKey(),
@@ -58,7 +61,8 @@ export const account = pgTable(
   (table) => [index("account_userId_idx").on(table.userId)],
 );
 
-export const verification = pgTable(
+type Verification = typeof verification.$inferSelect;
+const verification = pgTable(
   "verification",
   {
     id: text("id").primaryKey(),
@@ -73,21 +77,31 @@ export const verification = pgTable(
   (table) => [index("verification_identifier_idx").on(table.identifier)],
 );
 
-export const userRelations = relations(user, ({ many }) => ({
+const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   accounts: many(account),
 }));
 
-export const sessionRelations = relations(session, ({ one }) => ({
+const sessionRelations = relations(session, ({ one }) => ({
   user: one(user, {
     fields: [session.userId],
     references: [user.id],
   }),
 }));
 
-export const accountRelations = relations(account, ({ one }) => ({
+const accountRelations = relations(account, ({ one }) => ({
   user: one(user, {
     fields: [account.userId],
     references: [user.id],
   }),
 }));
+export type { User, Account, Session, Verification };
+export {
+  user,
+  account,
+  session,
+  verification,
+  userRelations,
+  sessionRelations,
+  accountRelations,
+};

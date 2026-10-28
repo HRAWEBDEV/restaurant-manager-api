@@ -57,7 +57,7 @@ async function startApp() {
     console.log(`App started on port: ${PORT}`);
   } catch (err) {
     console.log(`Failed to start app:${err}`);
-    // stopApp(1);
+    await stopApp(1);
   }
 }
 

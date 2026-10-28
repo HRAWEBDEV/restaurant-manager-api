@@ -3,9 +3,6 @@ import type { EmptyRelations } from "drizzle-orm";
 import { drizzle, type BunSQLQueryResultHKT } from "drizzle-orm/bun-sql";
 import type { PgAsyncTransaction } from "drizzle-orm/pg-core";
 
-type DBExecuter =
-  PgAsyncTransaction<BunSQLQueryResultHKT, EmptyRelations> | typeof db;
-
 if (!process.env.DATABASE_URL!) {
   throw new Error("DATABASE_URL is not defined");
 }
@@ -26,9 +23,8 @@ async function closeConnection() {
   await client.end();
 }
 
-db.transaction(async (tx) => {
-  tx;
-});
+type DBExecuter =
+  PgAsyncTransaction<BunSQLQueryResultHKT, EmptyRelations> | typeof db;
 
 export type { DBExecuter };
 export { db, closeConnection, testConnection };

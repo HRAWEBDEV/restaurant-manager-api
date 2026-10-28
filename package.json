@@ -1,0 +1,29 @@
+{
+  "name": "restaurant-manager-api",
+  "module": "./src/index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "NODE_ENV=development bun run --watch --check ./src/index.ts",
+    "db:generate": "bunx --bun drizzle-kit generate",
+    "db:migrate": "bunx --bun drizzle-kit migrate",
+    "auth:generate": "bun x --bun auth@latest generate"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "drizzle-kit": "^1.0.0-rc.5"
+  },
+  "peerDependencies": {
+    "typescript": "^7"
+  },
+  "dependencies": {
+    "@better-auth/drizzle-adapter": "^1.7.14",
+    "@hono/bun": "^1.0.1",
+    "@hono/swagger-ui": "^0.6.1",
+    "@hono/zod-openapi": "^1.6.3",
+    "better-auth": "^1.7.14",
+    "drizzle-orm": "^1.0.0-rc.5",
+    "hono": "^4.13.14",
+    "zod": "^4.6.7"
+  }
+}

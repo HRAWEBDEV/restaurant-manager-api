@@ -1,6 +1,14 @@
 import { swaggerUI } from "@hono/swagger-ui";
 import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
 import { authRoutes } from "./auth/auth";
+import { ZodError } from "zod";
+import { handleZodError } from "../../utils/ZodError";
+import { handleNotFoundError, NotFoundError } from "../../utils/NotFoundError";
+import { DrizzleQueryError } from "drizzle-orm";
+import { handleDbError } from "../../utils/DbError";
+import { handleInternalError } from "../../utils/InternalError";
+import { APIError } from "better-auth";
+import { handleAuthError } from "../../utils/AuthError";
 
 const checkHealth = createRoute({
   method: "get",
@@ -36,5 +44,22 @@ apiV1Routes.get(
     url: "/api/v1/doc",
   }),
 );
+
+apiV1Routes.onError((err, c) => {
+  if (err instanceof ZodError) {
+    return handleZodError(c, err);
+  }
+  if (err instanceof NotFoundError) {
+    return handleNotFoundError(c, err);
+  }
+  if (err instanceof DrizzleQueryError) {
+    return handleDbError(c, err);
+  }
+  if (err instanceof APIError) {
+    return handleAuthError(c, err);
+  }
+  // internal error
+  return handleInternalError(c);
+});
 
 export { apiV1Routes };

@@ -1,5 +1,7 @@
 import { relations } from "drizzle-orm/_relations";
 import { pgTable, text, timestamp, boolean, index } from "drizzle-orm/pg-core";
+import { createSchemaFactory } from "drizzle-orm/zod";
+import { z } from "@hono/zod-openapi";
 
 type User = typeof user.$inferSelect;
 const user = pgTable("user", {
@@ -14,6 +16,9 @@ const user = pgTable("user", {
     .notNull(),
   username: text("username").unique(),
   displayUsername: text("display_username"),
+});
+const userSchemaFactory = createSchemaFactory({
+  zodInstance: z,
 });
 
 type Session = typeof session.$inferSelect;

@@ -1,22 +1,26 @@
 import { createRoute, z, OpenAPIHono } from "@hono/zod-openapi";
-import { auth } from "../../../auth";
+import { auth } from "../../../../auth";
 const authRoutes = new OpenAPIHono().basePath("/auth");
+import { insertOrganizationSchema } from "../../../../db/schemas/organizations";
 
 const signUpPropsSchema = z.object({
-  name: z.string().min(1).openapi({
-    example: "john",
+  user: z.object({
+    name: z.string().min(1).openapi({
+      example: "john",
+    }),
+    username: z.string().min(1).openapi({
+      example: "john",
+      description: "must be unique",
+    }),
+    email: z.email().min(1).openapi({
+      example: "john@gmail.com",
+      description: "must be unique",
+    }),
+    password: z.string().min(1).openapi({
+      example: "johnTest@1",
+    }),
   }),
-  username: z.string().min(1).openapi({
-    example: "john",
-    description: "must be unique",
-  }),
-  email: z.email().min(1).openapi({
-    example: "john@gmail.com",
-    description: "must be unique",
-  }),
-  password: z.string().min(1).openapi({
-    example: "johnTest@1",
-  }),
+  organization: insertOrganizationSchema,
 });
 
 const signUpRoute = createRoute({
@@ -42,9 +46,10 @@ const signUpRoute = createRoute({
 });
 
 authRoutes.openapi(signUpRoute, async (c) => {
+  const props = c.req.valid("json");
   const result = await auth.api.signUpEmail({
     headers: c.req.raw.headers,
-    body: c.req.valid("json"),
+    body: props["user"],
     asResponse: true,
   });
   return result;
@@ -80,6 +85,7 @@ const signInWithPasswordRoute = createRoute({
   tags: ["Auth"],
   request: {
     body: {
+      required: true,
       content: {
         "application/json": {
           schema: signInWithPasswordPropsSchema,

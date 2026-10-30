@@ -1,6 +1,6 @@
 import { swaggerUI } from "@hono/swagger-ui";
 import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
-import { authRoutes } from "./auth/auth";
+import { authRoutes } from "./routes/auth/auth";
 import { ZodError } from "zod";
 import { handleZodError } from "../../utils/ZodError";
 import { handleNotFoundError, NotFoundError } from "../../utils/NotFoundError";

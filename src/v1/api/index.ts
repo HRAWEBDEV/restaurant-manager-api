@@ -51,6 +51,7 @@ apiV1Routes.use(authMiddleware);
 
 // error catcher
 apiV1Routes.onError((err, c) => {
+  console.log(err);
   if (err instanceof ZodError) {
     return handleZodError(c, err);
   }

@@ -1,3 +1,28 @@
+CREATE TYPE "organization_roles" AS ENUM('owner', 'admin', 'member');--> statement-breakpoint
+CREATE TABLE "info" (
+	"title" varchar(50) DEFAULT 'restaurant manager app'
+);
+--> statement-breakpoint
+CREATE TABLE "organizations" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+	"name" varchar(100) NOT NULL,
+	"slug" varchar(150) NOT NULL UNIQUE,
+	"logo" text,
+	"description" text,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "organization_members" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+	"organization_id" uuid NOT NULL,
+	"user_id" text NOT NULL,
+	"role" "organization_roles" DEFAULT 'member'::"organization_roles" NOT NULL,
+	"joined_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"added_by" text,
+	CONSTRAINT "organization_members_unique" UNIQUE("organization_id","user_id")
+);
+--> statement-breakpoint
 CREATE TABLE "account" (
 	"id" text PRIMARY KEY,
 	"account_id" text NOT NULL,
@@ -49,5 +74,8 @@ CREATE TABLE "verification" (
 CREATE INDEX "account_userId_idx" ON "account" ("user_id");--> statement-breakpoint
 CREATE INDEX "session_userId_idx" ON "session" ("user_id");--> statement-breakpoint
 CREATE INDEX "verification_identifier_idx" ON "verification" ("identifier");--> statement-breakpoint
+ALTER TABLE "organization_members" ADD CONSTRAINT "organization_members_organization_id_organizations_id_fkey" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON DELETE CASCADE;--> statement-breakpoint
+ALTER TABLE "organization_members" ADD CONSTRAINT "organization_members_user_id_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE CASCADE;--> statement-breakpoint
+ALTER TABLE "organization_members" ADD CONSTRAINT "organization_members_added_by_user_id_fkey" FOREIGN KEY ("added_by") REFERENCES "user"("id") ON DELETE SET NULL;--> statement-breakpoint
 ALTER TABLE "account" ADD CONSTRAINT "account_user_id_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE CASCADE;--> statement-breakpoint
 ALTER TABLE "session" ADD CONSTRAINT "session_user_id_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE CASCADE;

@@ -29,9 +29,6 @@ apiV1Routes.openapi(checkHealth, (c) => {
     message: "version one is running",
   });
 });
-apiV1Routes.use(authMiddleware);
-apiV1Routes.route("/", authRoutes);
-
 // doc
 apiV1Routes.doc("/doc", {
   openapi: "3.0.0",
@@ -48,6 +45,11 @@ apiV1Routes.get(
   }),
 );
 
+// my routes
+apiV1Routes.route("/", authRoutes);
+apiV1Routes.use(authMiddleware);
+
+// error catcher
 apiV1Routes.onError((err, c) => {
   if (err instanceof ZodError) {
     return handleZodError(c, err);

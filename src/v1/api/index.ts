@@ -9,25 +9,28 @@ import { handleDbError } from "../../utils/DbError";
 import { handleInternalError } from "../../utils/InternalError";
 import { APIError } from "better-auth";
 import { handleAuthError } from "../../utils/AuthError";
+import { authMiddleware } from "../../middlewares/authMiddleware";
 
 const checkHealth = createRoute({
   method: "get",
+  description: "check if api is running",
   path: "/health",
   tags: ["health"],
   responses: {
     200: {
-      description: "application is working",
+      description: "application is running",
     },
   },
 });
 
 const apiV1Routes = new OpenAPIHono().basePath("/api/v1");
-apiV1Routes.route("/", authRoutes);
 apiV1Routes.openapi(checkHealth, (c) => {
   return c.json({
-    message: "version one is working",
+    message: "version one is running",
   });
 });
+apiV1Routes.use(authMiddleware);
+apiV1Routes.route("/", authRoutes);
 
 // doc
 apiV1Routes.doc("/doc", {

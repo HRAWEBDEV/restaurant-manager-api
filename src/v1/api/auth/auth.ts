@@ -21,10 +21,12 @@ const signUpPropsSchema = z.object({
 
 const signUpRoute = createRoute({
   method: "post",
+  description: "Sign up",
   path: "/sign-up",
   tags: ["Auth"],
   request: {
     body: {
+      required: true,
       content: {
         "application/json": {
           schema: signUpPropsSchema,
@@ -34,30 +36,71 @@ const signUpRoute = createRoute({
   },
   responses: {
     200: {
-      description: "if sign up is successful",
-      content: {
-        "application/json": {
-          schema: z.object({
-            message: z.string(),
-          }),
-        },
-      },
+      description: "signed up",
     },
   },
 });
 
 authRoutes.openapi(signUpRoute, async (c) => {
-  await auth.api.signUpEmail({
+  const result = await auth.api.signUpEmail({
     headers: c.req.raw.headers,
-    returnHeaders: true,
     body: c.req.valid("json"),
+    asResponse: true,
   });
-  return c.json(
-    {
-      message: "you are signed up",
+  return result;
+});
+
+const signInWithPasswordPropsSchema = z
+  .object({
+    username: z.string().openapi({
+      example: "john",
+      description: "username or email is required",
+    }),
+    email: z.email().openapi({
+      example: "john@gmail.com",
+      description: "username or email is required",
+    }),
+    password: z.string().min(1).openapi({
+      example: "johnTest@1",
+    }),
+  })
+  .superRefine((props, ctx) => {
+    if (!props.email && !props.username) {
+      ctx.addIssue({
+        code: "custom",
+        message: "username or email is required",
+      });
+    }
+  });
+
+const signInWithPasswordRoute = createRoute({
+  method: "post",
+  description: "Sign in",
+  path: "sign-in/with-password",
+  tags: ["Auth"],
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: signInWithPasswordPropsSchema,
+        },
+      },
     },
-    200,
-  );
+  },
+  responses: {
+    200: {
+      description: "signed in",
+    },
+  },
+});
+
+authRoutes.openapi(signInWithPasswordRoute, async (c) => {
+  const result = await auth.api.signInEmail({
+    headers: c.req.raw.headers,
+    body: c.req.valid("json"),
+    asResponse: true,
+  });
+  return result;
 });
 
 export { authRoutes };

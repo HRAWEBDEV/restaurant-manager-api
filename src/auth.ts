@@ -5,12 +5,18 @@ import { db } from "./db/connect";
 import { username, openAPI } from "better-auth/plugins";
 import * as schema from "../auth-schema";
 
+const SESSION_REFRESH_THRESHOLD_MS = 1000 * 60 * 5; // 5 minutes
+const SESSION_EXPIRE_MS = 1000 * 60 * 60 * 24;
 export const auth = betterAuth({
   database: drizzleAdapter(db, { provider: "pg", schema }),
   emailAndPassword: {
     enabled: true,
   },
   plugins: [username(), openAPI()],
+  session: {
+    expiresIn: SESSION_EXPIRE_MS,
+    updateAge: SESSION_REFRESH_THRESHOLD_MS,
+  },
   socialProviders: {
     // google: {
     //   clientId: process.env.GOOGLE_CLIENT_ID!,

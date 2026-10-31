@@ -23,6 +23,17 @@ CREATE TABLE "organization_members" (
 	CONSTRAINT "organization_members_unique" UNIQUE("organization_id","user_id")
 );
 --> statement-breakpoint
+CREATE TABLE "workspaces" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+	"organization_id" uuid NOT NULL,
+	"name" varchar(100) NOT NULL,
+	"slug" varchar(150) NOT NULL UNIQUE,
+	"description" text,
+	"created_by" text,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE "account" (
 	"id" text PRIMARY KEY,
 	"account_id" text NOT NULL,
@@ -53,13 +64,18 @@ CREATE TABLE "session" (
 CREATE TABLE "user" (
 	"id" text PRIMARY KEY,
 	"name" text NOT NULL,
+	"firstName" text NOT NULL,
+	"lastName" text NOT NULL,
+	"avatar" text,
 	"email" text NOT NULL UNIQUE,
+	"phone_number" varchar(20) UNIQUE,
 	"email_verified" boolean DEFAULT false NOT NULL,
 	"image" text,
 	"created_at" timestamp NOT NULL,
 	"updated_at" timestamp NOT NULL,
 	"username" text UNIQUE,
-	"display_username" text
+	"display_username" text,
+	"active" boolean DEFAULT true
 );
 --> statement-breakpoint
 CREATE TABLE "verification" (
@@ -77,5 +93,7 @@ CREATE INDEX "verification_identifier_idx" ON "verification" ("identifier");--> 
 ALTER TABLE "organization_members" ADD CONSTRAINT "organization_members_organization_id_organizations_id_fkey" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON DELETE CASCADE;--> statement-breakpoint
 ALTER TABLE "organization_members" ADD CONSTRAINT "organization_members_user_id_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE CASCADE;--> statement-breakpoint
 ALTER TABLE "organization_members" ADD CONSTRAINT "organization_members_added_by_user_id_fkey" FOREIGN KEY ("added_by") REFERENCES "user"("id") ON DELETE SET NULL;--> statement-breakpoint
+ALTER TABLE "workspaces" ADD CONSTRAINT "workspaces_organization_id_organizations_id_fkey" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON DELETE CASCADE;--> statement-breakpoint
+ALTER TABLE "workspaces" ADD CONSTRAINT "workspaces_created_by_user_id_fkey" FOREIGN KEY ("created_by") REFERENCES "user"("id") ON DELETE SET NULL;--> statement-breakpoint
 ALTER TABLE "account" ADD CONSTRAINT "account_user_id_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE CASCADE;--> statement-breakpoint
 ALTER TABLE "session" ADD CONSTRAINT "session_user_id_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE CASCADE;

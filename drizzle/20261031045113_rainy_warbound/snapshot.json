@@ -2,7 +2,7 @@
   "type": "base",
   "version": "9",
   "dialect": "postgres",
-  "id": "4b0be798-6252-483b-8d59-9417cc4e58b6",
+  "id": "f80c92e8-edf7-4aef-9558-58f0dc9e0b84",
   "prevIds": [
     "00000000-0000-0000-0000-000000000000"
   ],
@@ -88,6 +88,26 @@
       "statementTarget": [
         "table",
         "public",
+        "workspaces"
+      ],
+      "writes": [
+        "s|tbl|public.workspaces",
+        "n|tbl|public.workspaces",
+        "e|tbl|public.workspaces",
+        "n|rel|public.workspaces",
+        "n|type|public.workspaces",
+        "n|rel|public.workspaces_pkey",
+        "n|rel|public.workspaces_slug_key"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
         "account"
       ],
       "writes": [
@@ -137,6 +157,7 @@
         "n|type|public.user",
         "n|rel|public.user_pkey",
         "n|rel|public.user_email_key",
+        "n|rel|public.user_phone_number_key",
         "n|rel|public.user_username_key"
       ],
       "reads": [
@@ -296,6 +317,52 @@
       "statementTarget": [
         "table",
         "public",
+        "workspaces"
+      ],
+      "writes": [
+        "s|fk|public.workspaces.workspaces_organization_id_organizations_id_fkey",
+        "n|fk|public.workspaces.workspaces_organization_id_organizations_id_fkey",
+        "e|fk|public.workspaces.workspaces_organization_id_organizations_id_fkey",
+        "n|con|public.workspaces.workspaces_organization_id_organizations_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.workspaces",
+        "n|sch|public",
+        "n|tbl|public.organizations",
+        "n|sch|public",
+        "n|col|public.workspaces.organization_id",
+        "n|col|public.organizations.id",
+        "e|uniqueness|public.organizations.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "workspaces"
+      ],
+      "writes": [
+        "s|fk|public.workspaces.workspaces_created_by_user_id_fkey",
+        "n|fk|public.workspaces.workspaces_created_by_user_id_fkey",
+        "e|fk|public.workspaces.workspaces_created_by_user_id_fkey",
+        "n|con|public.workspaces.workspaces_created_by_user_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.workspaces",
+        "n|sch|public",
+        "n|tbl|public.user",
+        "n|sch|public",
+        "n|col|public.workspaces.created_by",
+        "n|col|public.user.id",
+        "e|uniqueness|public.user.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
         "account"
       ],
       "writes": [
@@ -354,6 +421,12 @@
     {
       "schema": "public",
       "name": "organization_members",
+      "isRlsEnabled": false,
+      "entityType": "tables"
+    },
+    {
+      "schema": "public",
+      "name": "workspaces",
       "isRlsEnabled": false,
       "entityType": "tables"
     },
@@ -569,6 +642,110 @@
       "notNull": false,
       "dimensions": 0,
       "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "workspaces",
+      "name": "id",
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "gen_random_uuid()",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "workspaces",
+      "name": "organization_id",
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "workspaces",
+      "name": "name",
+      "type": "varchar(100)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "workspaces",
+      "name": "slug",
+      "type": "varchar(150)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "workspaces",
+      "name": "description",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "workspaces",
+      "name": "created_by",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "workspaces",
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "workspaces",
+      "name": "updated_at",
+      "type": "timestamp with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
       "generated": null,
       "identity": null,
       "entityType": "columns"
@@ -875,10 +1052,62 @@
     {
       "schema": "public",
       "table": "user",
+      "name": "firstName",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "user",
+      "name": "lastName",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "user",
+      "name": "avatar",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "user",
       "name": "email",
       "type": "text",
       "typeSchema": null,
       "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "user",
+      "name": "phone_number",
+      "type": "varchar(20)",
+      "typeSchema": null,
+      "notNull": false,
       "dimensions": 0,
       "default": null,
       "generated": null,
@@ -959,6 +1188,19 @@
       "notNull": false,
       "dimensions": 0,
       "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "user",
+      "name": "active",
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": "true",
       "generated": null,
       "identity": null,
       "entityType": "columns"
@@ -1157,6 +1399,40 @@
     },
     {
       "schema": "public",
+      "table": "workspaces",
+      "name": "workspaces_organization_id_organizations_id_fkey",
+      "nameExplicit": false,
+      "columns": [
+        "organization_id"
+      ],
+      "schemaTo": "public",
+      "tableTo": "organizations",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "entityType": "fks"
+    },
+    {
+      "schema": "public",
+      "table": "workspaces",
+      "name": "workspaces_created_by_user_id_fkey",
+      "nameExplicit": false,
+      "columns": [
+        "created_by"
+      ],
+      "schemaTo": "public",
+      "tableTo": "user",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "SET NULL",
+      "entityType": "fks"
+    },
+    {
+      "schema": "public",
       "table": "account",
       "name": "account_user_id_user_id_fkey",
       "nameExplicit": false,
@@ -1203,6 +1479,16 @@
       "schema": "public",
       "table": "organization_members",
       "name": "organization_members_pkey",
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "entityType": "pks"
+    },
+    {
+      "schema": "public",
+      "table": "workspaces",
+      "name": "workspaces_pkey",
       "columns": [
         "id"
       ],
@@ -1274,6 +1560,17 @@
     },
     {
       "schema": "public",
+      "table": "workspaces",
+      "name": "workspaces_slug_key",
+      "nameExplicit": false,
+      "columns": [
+        "slug"
+      ],
+      "nullsNotDistinct": false,
+      "entityType": "uniques"
+    },
+    {
+      "schema": "public",
       "table": "session",
       "name": "session_token_key",
       "nameExplicit": false,
@@ -1290,6 +1587,17 @@
       "nameExplicit": false,
       "columns": [
         "email"
+      ],
+      "nullsNotDistinct": false,
+      "entityType": "uniques"
+    },
+    {
+      "schema": "public",
+      "table": "user",
+      "name": "user_phone_number_key",
+      "nameExplicit": false,
+      "columns": [
+        "phone_number"
       ],
       "nullsNotDistinct": false,
       "entityType": "uniques"

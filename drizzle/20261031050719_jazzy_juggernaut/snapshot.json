@@ -1,0 +1,325 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "12912b39-84ed-40c2-b678-698997f0e273",
+  "prevIds": [
+    "f80c92e8-edf7-4aef-9558-58f0dc9e0b84"
+  ],
+  "footprints": [
+    {
+      "statementType": "create_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "workspace_roles"
+      ],
+      "writes": [
+        "s|enum|public.workspace_roles",
+        "n|enum|public.workspace_roles",
+        "e|enum|public.workspace_roles",
+        "n|type|public.workspace_roles"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "workspace_members"
+      ],
+      "writes": [
+        "s|tbl|public.workspace_members",
+        "n|tbl|public.workspace_members",
+        "e|tbl|public.workspace_members",
+        "n|rel|public.workspace_members",
+        "n|type|public.workspace_members",
+        "n|rel|public.workspace_members_pkey",
+        "n|rel|public.workspace_members_unique"
+      ],
+      "reads": [
+        "n|sch|public",
+        "n|enum|public.workspace_roles"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "workspace_members"
+      ],
+      "writes": [
+        "s|fk|public.workspace_members.workspace_members_workspace_id_workspaces_id_fkey",
+        "n|fk|public.workspace_members.workspace_members_workspace_id_workspaces_id_fkey",
+        "e|fk|public.workspace_members.workspace_members_workspace_id_workspaces_id_fkey",
+        "n|con|public.workspace_members.workspace_members_workspace_id_workspaces_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.workspace_members",
+        "n|sch|public",
+        "n|tbl|public.workspaces",
+        "n|sch|public",
+        "n|col|public.workspace_members.workspace_id",
+        "n|col|public.workspaces.id",
+        "e|uniqueness|public.workspaces.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "workspace_members"
+      ],
+      "writes": [
+        "s|fk|public.workspace_members.workspace_members_XXS3NoABnooI_fkey",
+        "n|fk|public.workspace_members.workspace_members_XXS3NoABnooI_fkey",
+        "e|fk|public.workspace_members.workspace_members_XXS3NoABnooI_fkey",
+        "n|con|public.workspace_members.workspace_members_XXS3NoABnooI_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.workspace_members",
+        "n|sch|public",
+        "n|tbl|public.organization_members",
+        "n|sch|public",
+        "n|col|public.workspace_members.organization_member_id",
+        "n|col|public.organization_members.id",
+        "e|uniqueness|public.organization_members.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "workspace_members"
+      ],
+      "writes": [
+        "s|fk|public.workspace_members.workspace_members_added_by_user_id_fkey",
+        "n|fk|public.workspace_members.workspace_members_added_by_user_id_fkey",
+        "e|fk|public.workspace_members.workspace_members_added_by_user_id_fkey",
+        "n|con|public.workspace_members.workspace_members_added_by_user_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.workspace_members",
+        "n|sch|public",
+        "n|tbl|public.user",
+        "n|sch|public",
+        "n|col|public.workspace_members.added_by",
+        "n|col|public.user.id",
+        "e|uniqueness|public.user.id"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "workspace_members",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "workspace_roles",
+        "values": [
+          "dmin",
+          "member"
+        ],
+        "entityType": "enums"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "workspace_members",
+        "name": "id",
+        "type": "uuid",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "gen_random_uuid()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "workspace_members",
+        "name": "workspace_id",
+        "type": "uuid",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "workspace_members",
+        "name": "organization_member_id",
+        "type": "uuid",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "workspace_members",
+        "name": "role",
+        "type": "workspace_roles",
+        "typeSchema": "public",
+        "notNull": true,
+        "dimensions": 0,
+        "default": "'member'",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "workspace_members",
+        "name": "joined_at",
+        "type": "timestamp with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "workspace_members",
+        "name": "added_by",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "workspace_members",
+        "name": "workspace_members_workspace_id_workspaces_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "workspace_id"
+        ],
+        "schemaTo": "public",
+        "tableTo": "workspaces",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "workspace_members",
+        "name": "workspace_members_XXS3NoABnooI_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "organization_member_id"
+        ],
+        "schemaTo": "public",
+        "tableTo": "organization_members",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "workspace_members",
+        "name": "workspace_members_added_by_user_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "added_by"
+        ],
+        "schemaTo": "public",
+        "tableTo": "user",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "SET NULL",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "workspace_members",
+        "name": "workspace_members_pkey",
+        "columns": [
+          "id"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "workspace_members",
+        "name": "workspace_members_unique",
+        "nameExplicit": true,
+        "columns": [
+          "organization_member_id",
+          "workspace_id"
+        ],
+        "nullsNotDistinct": false,
+        "entityType": "uniques"
+      }
+    }
+  ]
+}

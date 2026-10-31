@@ -140,10 +140,11 @@ class WorkspacesService {
       Pick<InsertWorkspace, "name" | "description">
     >) {
     let slug: string | undefined = undefined;
+    const currentWorkspace = await this.getWorkspace({
+      filters: { userId, workspaceId: id },
+    });
+    if (!currentWorkspace) return undefined;
     if (name) {
-      const currentWorkspace = await this.getWorkspace({
-        filters: { userId, workspaceId: id },
-      });
       if (currentWorkspace && currentWorkspace.name !== name) {
         slug = `${slugify(name, {
           trim: true,

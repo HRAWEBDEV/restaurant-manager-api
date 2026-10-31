@@ -2,7 +2,7 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "@better-auth/drizzle-adapter";
 import { db } from "./db/connect";
-import { username, openAPI } from "better-auth/plugins";
+import { username, openAPI, phoneNumber } from "better-auth/plugins";
 import * as schema from "../auth-schema";
 
 const SESSION_REFRESH_THRESHOLD_S = 60 * 5; // 5 minutes
@@ -28,6 +28,22 @@ export const auth = betterAuth({
         type: "string",
         required: true,
         input: true,
+      },
+      phoneNumber: {
+        type: "string",
+        required: false,
+        defaultValue: null,
+      },
+      avatar: {
+        type: "string",
+        required: false,
+        defaultValue: null,
+      },
+      active: {
+        type: "boolean",
+        required: false,
+        input: true,
+        defaultValue: true,
       },
     },
   },

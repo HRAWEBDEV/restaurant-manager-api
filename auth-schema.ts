@@ -1,5 +1,12 @@
 import { relations } from "drizzle-orm/_relations";
-import { pgTable, text, timestamp, boolean, index } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  timestamp,
+  boolean,
+  index,
+  varchar,
+} from "drizzle-orm/pg-core";
 import { createSchemaFactory } from "drizzle-orm/zod";
 import { z } from "@hono/zod-openapi";
 
@@ -9,7 +16,9 @@ const user = pgTable("user", {
   name: text("name").notNull(),
   firstName: text("firstName").notNull(),
   lastName: text("lastName").notNull(),
+  avatar: text("avatar"),
   email: text("email").notNull().unique(),
+  phoneNumber: varchar("phone_number", { length: 20 }).unique(),
   emailVerified: boolean("email_verified").default(false).notNull(),
   image: text("image"),
   createdAt: timestamp("created_at").notNull(),
@@ -18,6 +27,7 @@ const user = pgTable("user", {
     .notNull(),
   username: text("username").unique(),
   displayUsername: text("display_username"),
+  active: boolean("active").default(true),
 });
 const userSchemaFactory = createSchemaFactory({
   zodInstance: z,

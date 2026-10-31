@@ -15,6 +15,10 @@ const signUpPropsSchema = z.object({
       example: "john",
       description: "must be unique",
     }),
+    phoneNumber: z.string().openapi({
+      example: "09....",
+      description: "must be unique",
+    }),
     email: z.email().min(1).openapi({
       example: "john@gmail.com",
       description: "must be unique",

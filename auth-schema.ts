@@ -28,10 +28,18 @@ const user = pgTable("user", {
   displayUsername: text("display_username"),
   active: boolean("active").default(true),
 });
-const { createSelectSchema } = createSchemaFactory({
+const { createSelectSchema, createUpdateSchema } = createSchemaFactory({
   zodInstance: z,
 });
 const selectUserSchema = createSelectSchema(user);
+const updateUserSchema = createUpdateSchema(user).pick({
+  firstName: true,
+  lastName: true,
+  username: true,
+  displayUsername: true,
+  phoneNumber: true,
+  active: true,
+});
 
 type Session = typeof session.$inferSelect;
 const session = pgTable(
@@ -122,4 +130,5 @@ export {
   sessionRelations,
   selectUserSchema,
   accountRelations,
+  updateUserSchema,
 };

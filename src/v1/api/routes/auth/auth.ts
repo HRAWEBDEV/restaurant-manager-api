@@ -58,7 +58,7 @@ authRoutes.openapi(signUpRoute, async (c) => {
     headers: c.req.raw.headers,
     body: {
       ...props["user"],
-      name: `${props["user"].firstName} ${props["user"].lastName}}`,
+      name: `${props["user"].firstName} ${props["user"].lastName}`,
     },
     asResponse: true,
   });

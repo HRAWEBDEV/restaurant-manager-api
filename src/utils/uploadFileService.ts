@@ -28,6 +28,14 @@ const FILE_CATEGORY_PATHS = {
   image: "images",
 } as const;
 
+function getFileType(category: keyof typeof FILE_TYPES_CATEGORY) {
+  return [...FILE_TYPES_CATEGORY[category]];
+}
+
+function getFileTypePath(category: keyof typeof FILE_CATEGORY_PATHS) {
+  return FILE_CATEGORY_PATHS[category];
+}
+
 class UploadFileService {
   static readonly staticPath: string = "/static";
   private options: {
@@ -92,4 +100,6 @@ export {
   UploadFileService,
   InvalidFileTypeError,
   FileTooLargeError,
+  getFileType,
+  getFileTypePath,
 };

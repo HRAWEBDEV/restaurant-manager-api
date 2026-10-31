@@ -5,8 +5,11 @@ import { insertOrganizationSchema } from "../../../../db/schemas/organizations";
 
 const signUpPropsSchema = z.object({
   user: z.object({
-    name: z.string().min(1).openapi({
+    firstName: z.string().min(1).openapi({
       example: "john",
+    }),
+    lastName: z.string().min(1).openapi({
+      example: "doe",
     }),
     username: z.string().min(1).openapi({
       example: "john",
@@ -49,7 +52,10 @@ authRoutes.openapi(signUpRoute, async (c) => {
   const props = c.req.valid("json");
   const result = await auth.api.signUpEmail({
     headers: c.req.raw.headers,
-    body: props["user"],
+    body: {
+      ...props["user"],
+      name: `${props["user"].firstName} ${props["user"].lastName}}`,
+    },
     asResponse: true,
   });
   return result;

@@ -17,6 +17,20 @@ export const auth = betterAuth({
     expiresIn: SESSION_EXPIRE_S,
     updateAge: SESSION_REFRESH_THRESHOLD_S,
   },
+  user: {
+    additionalFields: {
+      firstName: {
+        type: "string",
+        required: true,
+        input: true,
+      },
+      lastName: {
+        type: "string",
+        required: true,
+        input: true,
+      },
+    },
+  },
   socialProviders: {
     // google: {
     //   clientId: process.env.GOOGLE_CLIENT_ID!,

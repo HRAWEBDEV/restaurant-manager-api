@@ -16,7 +16,6 @@ const user = pgTable("user", {
   name: text("name").notNull(),
   firstName: text("firstName").notNull(),
   lastName: text("lastName").notNull(),
-  avatar: text("avatar"),
   email: text("email").notNull().unique(),
   phoneNumber: varchar("phone_number", { length: 20 }).unique(),
   emailVerified: boolean("email_verified").default(false).notNull(),
@@ -29,9 +28,10 @@ const user = pgTable("user", {
   displayUsername: text("display_username"),
   active: boolean("active").default(true),
 });
-const userSchemaFactory = createSchemaFactory({
+const { createSelectSchema } = createSchemaFactory({
   zodInstance: z,
 });
+const selectUserSchema = createSelectSchema(user);
 
 type Session = typeof session.$inferSelect;
 const session = pgTable(
@@ -120,5 +120,6 @@ export {
   verification,
   userRelations,
   sessionRelations,
+  selectUserSchema,
   accountRelations,
 };

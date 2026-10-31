@@ -1,6 +1,7 @@
 import { swaggerUI } from "@hono/swagger-ui";
 import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
 import { authRoutes } from "./routes/auth/auth";
+import { usersRoutes } from "./routes/users/users";
 import { ZodError } from "zod";
 import { handleZodError } from "../../utils/ZodError";
 import { handleNotFoundError, NotFoundError } from "../../utils/NotFoundError";
@@ -10,6 +11,7 @@ import { handleInternalError } from "../../utils/InternalError";
 import { APIError } from "better-auth";
 import { handleAuthError } from "../../utils/AuthError";
 import { authMiddleware } from "../../middlewares/authMiddleware";
+import { organizationMiddleware } from "../../middlewares/organizationMiddleware";
 
 const checkHealth = createRoute({
   method: "get",
@@ -48,6 +50,8 @@ apiV1Routes.get(
 // my routes
 apiV1Routes.route("/", authRoutes);
 apiV1Routes.use(authMiddleware);
+apiV1Routes.route("/", usersRoutes);
+apiV1Routes.use(organizationMiddleware);
 
 // error catcher
 apiV1Routes.onError((err, c) => {

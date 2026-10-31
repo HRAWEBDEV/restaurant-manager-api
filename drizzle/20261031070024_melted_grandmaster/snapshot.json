@@ -1,0 +1,35 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "8048c7dd-a78b-4a8e-91dd-5189a1a6d38d",
+  "prevIds": [
+    "5f8223af-7dc0-4e1a-8a0b-9fe8fcd51f06"
+  ],
+  "footprints": [
+    {
+      "statementType": "drop_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "user",
+        "avatar"
+      ],
+      "writes": [
+        "s|col|public.user.avatar",
+        "n|col|public.user.avatar",
+        "e|col|public.user.avatar"
+      ],
+      "reads": [
+        "n|tbl|public.user",
+        "n|sch|public"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"user\",\"avatar\"]"
+    }
+  ]
+}

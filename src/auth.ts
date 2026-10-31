@@ -34,11 +34,6 @@ export const auth = betterAuth({
         required: false,
         defaultValue: null,
       },
-      avatar: {
-        type: "string",
-        required: false,
-        defaultValue: null,
-      },
       active: {
         type: "boolean",
         required: false,

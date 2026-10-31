@@ -2,6 +2,8 @@ import { createRoute, z, OpenAPIHono } from "@hono/zod-openapi";
 import { auth } from "../../../../auth";
 const authRoutes = new OpenAPIHono().basePath("/auth");
 import { insertOrganizationSchema } from "../../../../db/schemas/organizations";
+import { AccountServices } from "../../../../services/accountServices";
+import { db } from "../../../../db/connect";
 
 const signUpPropsSchema = z.object({
   user: z.object({
@@ -61,6 +63,17 @@ authRoutes.openapi(signUpRoute, async (c) => {
       name: `${props["user"].firstName} ${props["user"].lastName}`,
     },
     asResponse: true,
+  });
+  const body = (await result.clone().json()) as {
+    user: {
+      id: string;
+    };
+  };
+  const userId = body?.user?.id;
+  const accountService = new AccountServices(db);
+  accountService.createAccount({
+    organization: props["organization"],
+    userId,
   });
   return result;
 });

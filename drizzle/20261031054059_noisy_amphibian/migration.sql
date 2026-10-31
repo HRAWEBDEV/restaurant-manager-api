@@ -1,4 +1,5 @@
 CREATE TYPE "organization_roles" AS ENUM('owner', 'admin', 'member');--> statement-breakpoint
+CREATE TYPE "workspace_roles" AS ENUM('dmin', 'member');--> statement-breakpoint
 CREATE TABLE "info" (
 	"title" varchar(50) DEFAULT 'restaurant manager app'
 );
@@ -32,6 +33,16 @@ CREATE TABLE "workspaces" (
 	"created_by" text,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "workspace_members" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+	"workspace_id" uuid NOT NULL,
+	"organization_member_id" uuid NOT NULL,
+	"role" "workspace_roles" DEFAULT 'member'::"workspace_roles" NOT NULL,
+	"joined_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"added_by" text,
+	CONSTRAINT "workspace_members_unique" UNIQUE("organization_member_id","workspace_id")
 );
 --> statement-breakpoint
 CREATE TABLE "account" (
@@ -95,5 +106,8 @@ ALTER TABLE "organization_members" ADD CONSTRAINT "organization_members_user_id_
 ALTER TABLE "organization_members" ADD CONSTRAINT "organization_members_added_by_user_id_fkey" FOREIGN KEY ("added_by") REFERENCES "user"("id") ON DELETE SET NULL;--> statement-breakpoint
 ALTER TABLE "workspaces" ADD CONSTRAINT "workspaces_organization_id_organizations_id_fkey" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON DELETE CASCADE;--> statement-breakpoint
 ALTER TABLE "workspaces" ADD CONSTRAINT "workspaces_created_by_user_id_fkey" FOREIGN KEY ("created_by") REFERENCES "user"("id") ON DELETE SET NULL;--> statement-breakpoint
+ALTER TABLE "workspace_members" ADD CONSTRAINT "workspace_members_workspace_id_workspaces_id_fkey" FOREIGN KEY ("workspace_id") REFERENCES "workspaces"("id") ON DELETE CASCADE;--> statement-breakpoint
+ALTER TABLE "workspace_members" ADD CONSTRAINT "workspace_members_XXS3NoABnooI_fkey" FOREIGN KEY ("organization_member_id") REFERENCES "organization_members"("id") ON DELETE CASCADE;--> statement-breakpoint
+ALTER TABLE "workspace_members" ADD CONSTRAINT "workspace_members_added_by_user_id_fkey" FOREIGN KEY ("added_by") REFERENCES "user"("id") ON DELETE SET NULL;--> statement-breakpoint
 ALTER TABLE "account" ADD CONSTRAINT "account_user_id_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE CASCADE;--> statement-breakpoint
 ALTER TABLE "session" ADD CONSTRAINT "session_user_id_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE CASCADE;

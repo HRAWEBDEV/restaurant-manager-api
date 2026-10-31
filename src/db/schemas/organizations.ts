@@ -20,6 +20,7 @@ const { createInsertSchema, createUpdateSchema } = createSchemaFactory({
 });
 const insertOrganizationSchema = createInsertSchema(organizations).omit({
   id: true,
+  slug: true,
   createdAt: true,
   updatedAt: true,
 });

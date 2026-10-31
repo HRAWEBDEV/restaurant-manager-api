@@ -1,5 +1,7 @@
 import type { Context } from "hono";
 import { auth } from "../auth";
+import { type OrganizationMember } from "../db/schemas/organizationMembers";
+import { CONTEXT_USER_ORGANIZATION_MEMBER } from "./OrganizationContext";
 
 type Session = typeof auth.$Infer.Session;
 
@@ -9,6 +11,7 @@ const SESSION_CONTEXT = "SESSION";
 interface AuthContext {
   [USER_CONTEXT]: Session["user"];
   [SESSION_CONTEXT]: Session["session"];
+  [CONTEXT_USER_ORGANIZATION_MEMBER]: OrganizationMember;
 }
 
 function setContextUser(c: Context, user: Session["user"]) {
@@ -25,7 +28,7 @@ function getContextUser(
   }>,
 ) {
   const user = c.get(USER_CONTEXT);
-  if (!user) throw new Error("user is not set");
+  if (!user) throw new Error("user context is not set");
   return user;
 }
 

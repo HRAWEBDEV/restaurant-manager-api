@@ -58,7 +58,7 @@ class WorkspaceMembersService {
       )
       .innerJoin(organizations, eq(organizations.id, workspaces.organizationId))
       .innerJoin(user, eq(organizationMembers.userId, user.id))
-      .leftJoin(addedByUsers, eq(organizationMembers.addedBy, addedByUsers.id))
+      .leftJoin(addedByUsers, eq(workspaceMembers.addedBy, addedByUsers.id))
       .where(eq(workspaceMembers.workspaceId, filters.workspaceId))
       .orderBy(workspaceMembers.joinedAt);
     return members;

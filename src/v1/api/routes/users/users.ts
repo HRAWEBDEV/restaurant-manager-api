@@ -1,4 +1,4 @@
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 import {
   getContextUser,
   type AuthContext,
@@ -54,7 +54,15 @@ const updateUserRoute = createRoute({
     },
   },
   responses: {
-    200: {},
+    200: {
+      content: {
+        "application/json": {
+          schema: z.object({
+            status: z.boolean(),
+          }),
+        },
+      },
+    },
   },
 });
 
@@ -72,7 +80,7 @@ const handleUpdateUser: RouteHandler<
     headers: c.req.raw.headers,
     body: {
       ...props,
-      name: `${firstname} ${lastName}`,
+      name: `${firstname} ${lastName}`.trim(),
     },
   });
   return c.json(result, 200);

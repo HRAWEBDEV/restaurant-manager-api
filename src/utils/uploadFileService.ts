@@ -1,8 +1,6 @@
 import { mkdir } from "node:fs/promises";
-import { writeFile } from "node:fs/promises";
 import { extname, join } from "node:path";
 import { randomUUID } from "node:crypto";
-import { unlink } from "node:fs/promises";
 
 class InvalidFileTypeError extends Error {
   constructor(message: string) {
@@ -78,14 +76,14 @@ class UploadFileService {
     });
     const path = join(directory, filename);
     const buffer = Buffer.from(await file.arrayBuffer());
-    await writeFile(path, buffer);
+    await Bun.write(path, buffer);
     return `${UploadFileService.staticPath}/${this.options.savePath}/${filename}`;
   }
 
   async deleteStaticImage(avatarPath: string): Promise<void> {
     const filePath = join(process.cwd(), avatarPath);
     try {
-      await unlink(filePath);
+      await Bun.file(filePath).delete();
     } catch (error: any) {
       if (error.code !== "ENOENT") {
         throw error;

@@ -1,9 +1,10 @@
 import { createRoute, z, OpenAPIHono } from "@hono/zod-openapi";
 import { auth } from "../../../../auth";
-const authRoutes = new OpenAPIHono().basePath("/auth");
 import { insertOrganizationSchema } from "../../../../db/schemas/organizations";
 import { AccountServices } from "../../../../services/accountServices";
 import { db } from "../../../../db/connect";
+
+const authRoutes = new OpenAPIHono().basePath("/auth");
 
 const signUpPropsSchema = z.object({
   user: z.object({

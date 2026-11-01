@@ -12,6 +12,7 @@ import {
   organizations,
 } from "../db/schemas/organizations";
 import { z } from "@hono/zod-openapi";
+import { hasPermission } from "../utils/permissions/organizationPermissions";
 
 class OrganizationsService {
   constructor(private readonly db: DBExecuter) {}
@@ -97,7 +98,11 @@ class OrganizationsService {
     const currentOrganization = await this.getOrganization({
       filters: { userId, organizationId: id },
     });
-    if (!currentOrganization) return undefined;
+    if (
+      !currentOrganization ||
+      !hasPermission(currentOrganization.userRole, "organization:update")
+    )
+      return undefined;
     if (name) {
       if (currentOrganization.name !== name) {
         slug = `${slugify(name, {

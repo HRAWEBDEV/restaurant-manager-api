@@ -2,6 +2,7 @@ import { swaggerUI } from "@hono/swagger-ui";
 import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
 import { authRoutes } from "./routes/auth/auth";
 import { usersRoutes } from "./routes/users/users";
+import { accountRoutes } from "./routes/account/account";
 import { ZodError } from "zod";
 import { handleZodError } from "../../utils/ZodError";
 import { handleNotFoundError, NotFoundError } from "../../utils/NotFoundError";
@@ -50,6 +51,7 @@ apiV1Routes.get(
 // my routes
 apiV1Routes.route("/", authRoutes);
 apiV1Routes.use(authMiddleware);
+apiV1Routes.route("/", accountRoutes);
 apiV1Routes.route("/", usersRoutes);
 apiV1Routes.use(organizationMiddleware);
 

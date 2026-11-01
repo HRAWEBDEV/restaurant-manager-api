@@ -129,6 +129,7 @@ const uploadUserAvatarRoute = createRoute({
       },
     },
     400: {
+      description: "invalid image file",
       content: {
         "application/json": {
           schema: apiErrorShapeSchema,
@@ -167,7 +168,7 @@ const handleUploadUserAvatar: RouteHandler<
       },
     });
     if (user.image) {
-      uploadUserAvatar.deleteStaticImage(user.image);
+      await uploadUserAvatar.deleteStaticImage(user.image);
     }
     return c.json(
       {

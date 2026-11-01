@@ -7,30 +7,27 @@ import { db } from "../../../../db/connect";
 const authRoutes = new OpenAPIHono().basePath("/auth");
 
 const signUpPropsSchema = z.object({
-  user: z.object({
-    firstName: z.string().min(1).openapi({
-      example: "john",
-    }),
-    lastName: z.string().min(1).openapi({
-      example: "doe",
-    }),
-    username: z.string().min(1).openapi({
-      example: "john",
-      description: "must be unique",
-    }),
-    phoneNumber: z.string().openapi({
-      example: "09....",
-      description: "must be unique",
-    }),
-    email: z.email().min(1).openapi({
-      example: "john@gmail.com",
-      description: "must be unique",
-    }),
-    password: z.string().min(1).openapi({
-      example: "johnTest@1",
-    }),
+  firstName: z.string().min(1).openapi({
+    example: "john",
   }),
-  organization: insertOrganizationSchema,
+  lastName: z.string().min(1).openapi({
+    example: "doe",
+  }),
+  username: z.string().min(1).openapi({
+    example: "john",
+    description: "must be unique",
+  }),
+  phoneNumber: z.string().openapi({
+    example: "09....",
+    description: "must be unique",
+  }),
+  email: z.email().min(1).openapi({
+    example: "john@gmail.com",
+    description: "must be unique",
+  }),
+  password: z.string().min(1).openapi({
+    example: "johnTest@1",
+  }),
 });
 
 const signUpRoute = createRoute({
@@ -60,21 +57,10 @@ authRoutes.openapi(signUpRoute, async (c) => {
   const result = await auth.api.signUpEmail({
     headers: c.req.raw.headers,
     body: {
-      ...props["user"],
-      name: `${props["user"].firstName} ${props["user"].lastName}`.trim(),
+      ...props,
+      name: `${props.firstName} ${props.lastName}`.trim(),
     },
     asResponse: true,
-  });
-  const body = (await result.clone().json()) as {
-    user: {
-      id: string;
-    };
-  };
-  const userId = body?.user?.id;
-  const accountService = new AccountServices(db);
-  accountService.createAccount({
-    organization: props["organization"],
-    userId,
   });
   return result;
 });

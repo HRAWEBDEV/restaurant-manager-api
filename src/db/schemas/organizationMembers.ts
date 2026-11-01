@@ -11,7 +11,8 @@ import { organizations } from "./organizations";
 import { user } from "../../../auth-schema";
 import { z } from "@hono/zod-openapi";
 
-const roleEnum = pgEnum("organization_roles", ["owner", "admin", "member"]);
+const ogMemberRoles = ["owner", "admin", "member"] as const;
+const roleEnum = pgEnum("organization_roles", ogMemberRoles);
 
 type OrganizationMember = typeof organizationMembers.$inferSelect;
 type InsertOrganizationMember = typeof organizationMembers.$inferInsert;
@@ -52,4 +53,9 @@ const { createSelectSchema } = createSchemaFactory({
 const selectOrganizationMemberSchema = createSelectSchema(organizationMembers);
 
 export type { OrganizationMember, InsertOrganizationMember };
-export { organizationMembers, roleEnum, selectOrganizationMemberSchema };
+export {
+  organizationMembers,
+  roleEnum,
+  selectOrganizationMemberSchema,
+  ogMemberRoles,
+};

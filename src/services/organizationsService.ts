@@ -2,12 +2,16 @@ import slugify from "slugify";
 import { nanoid } from "nanoid";
 import { eq, and } from "drizzle-orm";
 import type { DBExecuter } from "../db/connect";
-import { organizationMembers } from "../db/schemas/organizationMembers";
+import {
+  organizationMembers,
+  ogMemberRoles,
+} from "../db/schemas/organizationMembers";
 import {
   type InsertOrganization,
   type Organization,
   organizations,
 } from "../db/schemas/organizations";
+import { z } from "@hono/zod-openapi";
 
 class OrganizationsService {
   constructor(private readonly db: DBExecuter) {}
@@ -44,7 +48,9 @@ class OrganizationsService {
       )
       .where(and(...filterConditions))
       .orderBy(organizations.createdAt);
-    return organizationsResult;
+    return {
+      organizations: organizationsResult,
+    };
   }
   async getOrganization({
     filters,
@@ -54,7 +60,7 @@ class OrganizationsService {
       organizationId: string;
     };
   }) {
-    return (await this.getOrganizations({ filters }))[0];
+    return (await this.getOrganizations({ filters })).organizations[0];
   }
   async createOrganization({
     name,
@@ -116,4 +122,23 @@ class OrganizationsService {
   }
 }
 
-export { OrganizationsService };
+type GetOrganizationsResult = Awaited<
+  ReturnType<OrganizationsService["getOrganizations"]>
+>;
+const getOrganizationsResultSchema: z.ZodType<GetOrganizationsResult> =
+  z.object({
+    organizations: z
+      .object({
+        id: z.string(),
+        name: z.string(),
+        logo: z.string().nullable(),
+        slug: z.string(),
+        description: z.string().nullable(),
+        createdAt: z.date(),
+        updatedAt: z.date(),
+        userRole: z.enum(ogMemberRoles),
+      })
+      .array(),
+  });
+
+export { OrganizationsService, getOrganizationsResultSchema };

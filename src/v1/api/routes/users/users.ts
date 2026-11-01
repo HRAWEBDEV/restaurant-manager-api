@@ -17,6 +17,11 @@ import {
   InvalidFileTypeError,
   FileTooLargeError,
 } from "../../../../utils/uploadFileService";
+import {
+  OrganizationsService,
+  getOrganizationsResultSchema,
+} from "../../../../services/organizationsService";
+import { db } from "../../../../db/connect";
 
 const usersRoutes = new OpenAPIHono<{
   Variables: AuthContext;
@@ -234,5 +239,39 @@ const handleDeleteUserAvatar: RouteHandler<
 };
 
 usersRoutes.openapi(deleteUserAvatarRoute, handleDeleteUserAvatar);
+
+const userOrganizationsRoute = createRoute({
+  method: "get",
+  description: "User organizations",
+  path: "/organizations",
+  tags: ["Users"],
+  request: {},
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: getOrganizationsResultSchema,
+        },
+      },
+    },
+  },
+});
+
+const handleGetUserOrganizations: RouteHandler<
+  typeof userOrganizationsRoute,
+  {
+    Variables: AuthContext;
+  }
+> = async (c) => {
+  const user = getContextUser(c);
+  const organizationService = new OrganizationsService(db);
+  const result = await organizationService.getOrganizations({
+    filters: {
+      userId: user.id,
+    },
+  });
+  return c.json(result, 200);
+};
+usersRoutes.openapi(userOrganizationsRoute, handleGetUserOrganizations);
 
 export { usersRoutes };

@@ -25,7 +25,7 @@ class OrganizationMembersService {
         userFirstName: user.firstName,
         userLastName: user.lastName,
         userEmail: user.email,
-        userAvatar: user.avatar,
+        userAvatar: user.image,
         userPhoneNumber: user.phoneNumber,
         organizationId: organizationMembers.organizationId,
         organizationName: organizations.name,

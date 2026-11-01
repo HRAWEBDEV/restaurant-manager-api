@@ -94,11 +94,12 @@ class OrganizationsService {
       Pick<InsertOrganization, "name" | "logo" | "description">
     >) {
     let slug: string | undefined = undefined;
+    const currentOrganization = await this.getOrganization({
+      filters: { userId, organizationId: id },
+    });
+    if (!currentOrganization) return undefined;
     if (name) {
-      const currentOrganization = await this.getOrganization({
-        filters: { userId, organizationId: id },
-      });
-      if (currentOrganization && currentOrganization.name !== name) {
+      if (currentOrganization.name !== name) {
         slug = `${slugify(name, {
           lower: true,
           strict: true,

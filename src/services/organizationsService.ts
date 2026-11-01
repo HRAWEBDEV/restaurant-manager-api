@@ -14,6 +14,14 @@ import {
 import { z } from "@hono/zod-openapi";
 import { hasPermission } from "../utils/permissions/organizationPermissions";
 
+function createOrganizationSlug(name: string) {
+  return `${slugify(name, {
+    lower: true,
+    strict: true,
+    trim: true,
+  })}_${nanoid(8)}`;
+}
+
 class OrganizationsService {
   constructor(private readonly db: DBExecuter) {}
   async getOrganizations({
@@ -67,11 +75,7 @@ class OrganizationsService {
     name,
     logo,
   }: Pick<InsertOrganization, "name" | "logo">) {
-    const slug = `${slugify(name, {
-      lower: true,
-      strict: true,
-      trim: true,
-    })}_${nanoid(8)}`;
+    const slug = createOrganizationSlug(name);
     const result = await this.db
       .insert(organizations)
       .values({
@@ -105,11 +109,7 @@ class OrganizationsService {
       return undefined;
     if (name) {
       if (currentOrganization.name !== name) {
-        slug = `${slugify(name, {
-          lower: true,
-          strict: true,
-          trim: true,
-        })}_${nanoid(8)}`;
+        slug = createOrganizationSlug(name);
       }
     }
     const [updatedOrganization] = await this.db

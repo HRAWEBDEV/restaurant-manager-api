@@ -10,6 +10,8 @@ import {
 import { organizations } from "../db/schemas/organizations";
 import { organizationMembers } from "../db/schemas/organizationMembers";
 import { workspaceMembers } from "../db/schemas/workspaceMembers";
+import { OrganizationsService } from "./organizationsService";
+import { hasPermission as hasOrganizationPermission } from "../utils/permissions/organizationPermissions";
 
 class WorkspacesService {
   constructor(private readonly db: DBExecuter) {}
@@ -43,8 +45,8 @@ class WorkspacesService {
         `,
       })
       .from(workspaces)
-      .leftJoin(organizations, eq(organizations.id, workspaces.organizationId))
-      .leftJoin(
+      .innerJoin(organizations, eq(organizations.id, workspaces.organizationId))
+      .innerJoin(
         organizationMembers,
         and(
           eq(organizationMembers.organizationId, workspaces.organizationId),
@@ -98,10 +100,21 @@ class WorkspacesService {
     organizationId,
     description,
     createdBy,
-  }: Pick<
-    InsertWorkspace,
-    "name" | "organizationId" | "description" | "createdBy"
-  >) {
+  }: Pick<InsertWorkspace, "name" | "organizationId" | "description"> & {
+    createdBy: string;
+  }) {
+    const organizationService = new OrganizationsService(this.db);
+    const organization = await organizationService.getOrganization({
+      filters: {
+        userId: createdBy,
+        organizationId,
+      },
+    });
+    if (
+      !organization ||
+      !hasOrganizationPermission(organization.userRole, "workspace:create")
+    )
+      return undefined;
     const slug = `${slugify(name, {
       trim: true,
       strict: true,
@@ -122,7 +135,9 @@ class WorkspacesService {
   async createPublicWorkspace({
     organizationId,
     createdBy,
-  }: Pick<InsertWorkspace, "organizationId" | "createdBy">) {
+  }: Pick<InsertWorkspace, "organizationId"> & {
+    createdBy: string;
+  }) {
     return this.createWorkspace({
       organizationId,
       createdBy,
@@ -143,7 +158,14 @@ class WorkspacesService {
     const currentWorkspace = await this.getWorkspace({
       filters: { userId, workspaceId: id },
     });
-    if (!currentWorkspace) return undefined;
+    if (
+      !currentWorkspace ||
+      !hasOrganizationPermission(
+        currentWorkspace.organizationRole,
+        "workspace:create",
+      )
+    )
+      return undefined;
     if (name) {
       if (currentWorkspace && currentWorkspace.name !== name) {
         slug = `${slugify(name, {
@@ -174,7 +196,22 @@ class WorkspacesService {
   async deleteWorkspace({
     id,
     organizationId,
-  }: Pick<Workspace, "id" | "organizationId">) {
+    userId,
+  }: Pick<Workspace, "id" | "organizationId"> & {
+    userId: string;
+  }) {
+    const organizationService = new OrganizationsService(this.db);
+    const organization = await organizationService.getOrganization({
+      filters: {
+        organizationId,
+        userId,
+      },
+    });
+    if (
+      !organization ||
+      !hasOrganizationPermission(organization.userRole, "workspace:delete")
+    )
+      return;
     const [deletedWorkspace] = await this.db
       .delete(workspaces)
       .where(

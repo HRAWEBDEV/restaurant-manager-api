@@ -95,6 +95,7 @@ class UploadFileService {
 export {
   FILE_TYPES_CATEGORY,
   FILE_CATEGORY_PATHS,
+  MAX_SIZE,
   UploadFileService,
   InvalidFileTypeError,
   FileTooLargeError,

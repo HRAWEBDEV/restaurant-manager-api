@@ -8,10 +8,12 @@ import {
   getContextUser,
   type AuthContext,
 } from "../../../../utils/AuthContext";
+import { OrganizationMembersService } from "../../../../services/organizationMembers";
 import {
   WorkspacesService,
   getWorkspacesResultSchema,
 } from "../../../../services/workspacesService";
+import { WorkspaceMembersService } from "../../../../services/workspaceMembersService";
 import {
   insertWorkspaceSchema,
   updateWorkspaceSchema,
@@ -130,11 +132,14 @@ const handleUpdateWorkspaces: RouteHandler<
   const user = getContextUser(c);
   const { id } = c.req.valid("param");
   const data = c.req.valid("json");
-  const workspacesService = new WorkspacesService(db);
-  const updatedWorkspace = await workspacesService.updateWorkspace({
-    ...data,
-    userId: user.id,
-    id,
+  const updatedWorkspace = db.transaction(async (tx) => {
+    const workspacesService = new WorkspacesService(tx);
+    const updatedWorkspace = await workspacesService.updateWorkspace({
+      ...data,
+      userId: user.id,
+      id,
+    });
+    return updatedWorkspace;
   });
   return c.json(updatedWorkspace, 200);
 };

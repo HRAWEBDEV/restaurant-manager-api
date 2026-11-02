@@ -12,7 +12,7 @@ import {
   organizations,
 } from "../db/schemas/organizations";
 import { z } from "@hono/zod-openapi";
-import { hasPermission } from "../utils/permissions/organizationPermissions";
+import { checkUserPermissions } from "../middlewares/checkUserPermissionsMiddleware";
 
 function createOrganizationSlug(name: string) {
   return `${slugify(name, {
@@ -104,7 +104,11 @@ class OrganizationsService {
     });
     if (
       !currentOrganization ||
-      !hasPermission(currentOrganization.userRole, "organization:update")
+      !checkUserPermissions({
+        type: "organization",
+        organizationRole: currentOrganization.userRole,
+        rolePermission: "organization:update",
+      })
     )
       return undefined;
     if (name) {

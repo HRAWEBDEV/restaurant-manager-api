@@ -11,9 +11,9 @@ import { organizations } from "../db/schemas/organizations";
 import { organizationMembers } from "../db/schemas/organizationMembers";
 import { workspaceMembers } from "../db/schemas/workspaceMembers";
 import { OrganizationsService } from "./organizationsService";
-import { hasPermission as hasOrganizationPermission } from "../utils/permissions/organizationPermissions";
 import { z } from "@hono/zod-openapi";
 import { ogMemberRoles } from "../db/schemas/organizationMembers";
+import { checkUserPermissions } from "../middlewares/checkUserPermissionsMiddleware";
 
 function createWorkspaceSlug(name: string) {
   return `${slugify(name, {
@@ -124,7 +124,11 @@ class WorkspacesService {
     });
     if (
       !organization ||
-      !hasOrganizationPermission(organization.userRole, "workspace:create")
+      !checkUserPermissions({
+        type: "organization",
+        organizationRole: organization.userRole,
+        rolePermission: "workspace:delete",
+      })
     )
       return undefined;
     const slug = createWorkspaceSlug(name);
@@ -167,10 +171,11 @@ class WorkspacesService {
     });
     if (
       !currentWorkspace ||
-      !hasOrganizationPermission(
-        currentWorkspace.organizationRole,
-        "workspace:create",
-      )
+      !checkUserPermissions({
+        type: "organization",
+        organizationRole: currentWorkspace.organizationRole,
+        rolePermission: "workspace:delete",
+      })
     )
       return undefined;
     if (name) {
@@ -207,7 +212,11 @@ class WorkspacesService {
     });
     if (
       !organization ||
-      !hasOrganizationPermission(organization.userRole, "workspace:delete")
+      !checkUserPermissions({
+        type: "organization",
+        organizationRole: organization.userRole,
+        rolePermission: "workspace:delete",
+      })
     )
       return;
     const [deletedWorkspace] = await this.db

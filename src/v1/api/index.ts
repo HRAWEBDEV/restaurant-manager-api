@@ -15,6 +15,7 @@ import { APIError } from "better-auth";
 import { handleAuthError } from "../../utils/AuthError";
 import { authMiddleware } from "../../middlewares/authMiddleware";
 import { organizationMiddleware } from "../../middlewares/organizationMiddleware";
+import { workspaceMiddleware } from "../../middlewares/workspaceMiddleware";
 
 const checkHealth = createRoute({
   method: "get",
@@ -58,6 +59,7 @@ apiV1Routes.route("/", usersRoutes);
 apiV1Routes.route("/", organizationsRoutes);
 apiV1Routes.route("/", workspacesRoutes);
 apiV1Routes.use(organizationMiddleware);
+apiV1Routes.use(workspaceMiddleware);
 
 // error catcher
 apiV1Routes.onError((err, c) => {

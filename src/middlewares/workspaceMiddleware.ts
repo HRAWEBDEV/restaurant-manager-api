@@ -1,7 +1,6 @@
 import { createMiddleware } from "hono/factory";
 import { type MiddlewareHandler } from "hono";
 import { type AuthContext } from "../utils/AuthContext";
-import { getContextUser } from "../utils/AuthContext";
 import { StatusCodes } from "http-status-codes";
 import { getApiErrorShape } from "../utils/apiTypes";
 import { WorkspaceMembersService } from "../services/workspaceMembersService";

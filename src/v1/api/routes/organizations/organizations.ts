@@ -219,6 +219,11 @@ const handleDeleteOrganizationLogo: RouteHandler<
   if (organization.logo) {
     const uploadOrganizationLogo = new UploadOrganizationLogo();
     await uploadOrganizationLogo.deleteStaticImage(organization.logo);
+    await organizationService.updateOrganization({
+      id,
+      userId: user.id,
+      logo: null,
+    });
   }
   return c.json(
     {

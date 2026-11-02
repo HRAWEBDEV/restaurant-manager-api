@@ -4,6 +4,7 @@ import { authRoutes } from "./routes/auth/auth";
 import { usersRoutes } from "./routes/users/users";
 import { accountRoutes } from "./routes/account/account";
 import { organizationsRoutes } from "./routes/organizations/organizations";
+import { workspacesRoutes } from "./routes/workspaces/workspaces";
 import { ZodError } from "zod";
 import { handleZodError } from "../../utils/ZodError";
 import { handleNotFoundError, NotFoundError } from "../../utils/NotFoundError";
@@ -55,6 +56,7 @@ apiV1Routes.use(authMiddleware);
 apiV1Routes.route("/", accountRoutes);
 apiV1Routes.route("/", usersRoutes);
 apiV1Routes.route("/", organizationsRoutes);
+apiV1Routes.route("/", workspacesRoutes);
 apiV1Routes.use(organizationMiddleware);
 
 // error catcher

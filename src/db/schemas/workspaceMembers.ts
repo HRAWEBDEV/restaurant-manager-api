@@ -12,7 +12,8 @@ import { organizationMembers } from "./organizationMembers";
 import { workspaces } from "./workspaces";
 import { user } from "../../../auth-schema";
 
-export const roleEnum = pgEnum("workspace_roles", ["dmin", "member"]);
+const workspaceRoles = ["admin", "member"] as const;
+export const roleEnum = pgEnum("workspace_roles", ["admin", "member"]);
 
 type WorkspaceMember = typeof workspaceMembers.$inferSelect;
 type InsertWorkspaceMember = typeof workspaceMembers.$inferInsert;
@@ -54,4 +55,9 @@ const selectWorkspaceMemberSchema = createSelectSchema(workspaceMembers);
 const insertWorkspaceMember = createInsertSchema(workspaceMembers);
 
 export type { WorkspaceMember, InsertWorkspaceMember };
-export { workspaceMembers, selectWorkspaceMemberSchema, insertWorkspaceMember };
+export {
+  workspaceMembers,
+  selectWorkspaceMemberSchema,
+  insertWorkspaceMember,
+  workspaceRoles,
+};

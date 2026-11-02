@@ -1,17 +1,20 @@
 import type { Context } from "hono";
 import { auth } from "../auth";
 import { type OrganizationMember } from "../db/schemas/organizationMembers";
-import { CONTEXT_USER_ORGANIZATION_MEMBER } from "./OrganizationContext";
+import { workspaceRoles } from "../db/schemas/workspaceMembers";
 
 type Session = typeof auth.$Infer.Session;
 
 const USER_CONTEXT = "USER";
 const SESSION_CONTEXT = "SESSION";
+const CONTEXT_USER_ORGANIZATION_MEMBER = "userOrganizationMember";
+const CONTEXT_USER_WORKSPACE_MEMBER_ROLE = "userWorkspaceMemberRole";
 
 interface AuthContext {
   [USER_CONTEXT]: Session["user"];
   [SESSION_CONTEXT]: Session["session"];
   [CONTEXT_USER_ORGANIZATION_MEMBER]: OrganizationMember;
+  [CONTEXT_USER_WORKSPACE_MEMBER_ROLE]: (typeof workspaceRoles)[number];
 }
 
 function setContextUser(c: Context, user: Session["user"]) {
@@ -43,4 +46,11 @@ function getContextSession(
 }
 
 export type { Session, AuthContext };
-export { setContextSession, setContextUser, getContextSession, getContextUser };
+export {
+  CONTEXT_USER_ORGANIZATION_MEMBER,
+  CONTEXT_USER_WORKSPACE_MEMBER_ROLE,
+  setContextSession,
+  setContextUser,
+  getContextSession,
+  getContextUser,
+};

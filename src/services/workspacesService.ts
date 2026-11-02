@@ -12,6 +12,8 @@ import { organizationMembers } from "../db/schemas/organizationMembers";
 import { workspaceMembers } from "../db/schemas/workspaceMembers";
 import { OrganizationsService } from "./organizationsService";
 import { hasPermission as hasOrganizationPermission } from "../utils/permissions/organizationPermissions";
+import { z } from "@hono/zod-openapi";
+import { ogMemberRoles } from "../db/schemas/organizationMembers";
 
 class WorkspacesService {
   constructor(private readonly db: DBExecuter) {}
@@ -83,7 +85,9 @@ class WorkspacesService {
       baseQuery = baseQuery.limit(1);
     }
     const workspacesResult = await baseQuery;
-    return workspacesResult;
+    return {
+      workspaces: workspacesResult,
+    };
   }
   async getWorkspace({
     filters,
@@ -93,7 +97,7 @@ class WorkspacesService {
       workspaceId: string;
     };
   }) {
-    return (await this.getWorkspaces({ filters }))[0];
+    return (await this.getWorkspaces({ filters })).workspaces[0];
   }
   async createWorkspace({
     name,
@@ -227,4 +231,25 @@ class WorkspacesService {
   }
 }
 
-export { WorkspacesService };
+type GetWorkspacesResult = Awaited<
+  ReturnType<WorkspacesService["getWorkspaces"]>
+>;
+
+const getWorkspacesResultSchema: z.ZodType<GetWorkspacesResult> = z.object({
+  workspaces: z
+    .object({
+      id: z.string(),
+      name: z.string(),
+      slug: z.string(),
+      description: z.string().nullable(),
+      createdBy: z.string().nullable(),
+      organizationId: z.string(),
+      organizationName: z.string(),
+      organizationRole: z.enum(ogMemberRoles),
+      organizationSlug: z.string(),
+      workspaceMemberRole: z.string(),
+    })
+    .array(),
+});
+
+export { WorkspacesService, getWorkspacesResultSchema };

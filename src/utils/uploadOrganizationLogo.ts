@@ -4,7 +4,7 @@ import {
   getFileTypePath,
 } from "./uploadFileService";
 
-class UploadOrganizationAvatar extends UploadFileService {
+class UploadOrganizationLogo extends UploadFileService {
   constructor() {
     super({
       savePath: `${getFileTypePath("image")}/logo`,
@@ -13,4 +13,4 @@ class UploadOrganizationAvatar extends UploadFileService {
   }
 }
 
-export { UploadOrganizationAvatar };
+export { UploadOrganizationLogo };

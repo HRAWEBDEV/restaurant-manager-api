@@ -104,7 +104,7 @@ const handleUpdateUser: RouteHandler<
 usersRoutes.openapi(updateUserRoute, handleUpdateUser);
 
 const uploadUserAvatarRoute = createRoute({
-  method: "post",
+  method: "patch",
   path: "/avatar",
   tags: ["Users"],
   description: "Upload user avatar",
@@ -229,6 +229,12 @@ const handleDeleteUserAvatar: RouteHandler<
   if (user.image) {
     const uploadUserAvatar = new UploadUserImageService();
     await uploadUserAvatar.deleteStaticImage(user.image);
+    await auth.api.updateUser({
+      headers: c.req.raw.headers,
+      body: {
+        image: null,
+      },
+    });
   }
   return c.json(
     {

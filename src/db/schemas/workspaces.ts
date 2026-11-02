@@ -27,8 +27,20 @@ const workspaces = snakeCase.table("workspaces", {
 const { createInsertSchema, createUpdateSchema } = createSchemaFactory({
   zodInstance: z,
 });
-const insertWorkspaceSchema = createInsertSchema(workspaces);
-const updateWorkspaceSchema = createUpdateSchema(workspaces);
-
+const insertWorkspaceSchema = createInsertSchema(workspaces).omit({
+  id: true,
+  updatedAt: true,
+  createdAt: true,
+  createdBy: true,
+  slug: true,
+});
+const updateWorkspaceSchema = createUpdateSchema(workspaces).omit({
+  id: true,
+  updatedAt: true,
+  createdAt: true,
+  createdBy: true,
+  slug: true,
+  organizationId: true,
+});
 export type { Workspace, InsertWorkspace };
 export { workspaces, insertWorkspaceSchema, updateWorkspaceSchema };

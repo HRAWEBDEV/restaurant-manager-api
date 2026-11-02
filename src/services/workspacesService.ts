@@ -15,6 +15,14 @@ import { hasPermission as hasOrganizationPermission } from "../utils/permissions
 import { z } from "@hono/zod-openapi";
 import { ogMemberRoles } from "../db/schemas/organizationMembers";
 
+function createWorkspaceSlug(name: string) {
+  return `${slugify(name, {
+    trim: true,
+    strict: true,
+    lower: true,
+  })}_${nanoid(8)}`;
+}
+
 class WorkspacesService {
   constructor(private readonly db: DBExecuter) {}
   async getWorkspaces({
@@ -119,11 +127,7 @@ class WorkspacesService {
       !hasOrganizationPermission(organization.userRole, "workspace:create")
     )
       return undefined;
-    const slug = `${slugify(name, {
-      trim: true,
-      strict: true,
-      lower: true,
-    })}_${nanoid(8)}`;
+    const slug = createWorkspaceSlug(name);
     const [createdWorkspace] = await this.db
       .insert(workspaces)
       .values({
@@ -154,8 +158,7 @@ class WorkspacesService {
     userId,
     name,
     description,
-    organizationId,
-  }: Pick<Workspace, "id" | "organizationId"> & { userId: string } & Partial<
+  }: Pick<Workspace, "id"> & { userId: string } & Partial<
       Pick<InsertWorkspace, "name" | "description">
     >) {
     let slug: string | undefined = undefined;
@@ -172,11 +175,7 @@ class WorkspacesService {
       return undefined;
     if (name) {
       if (currentWorkspace && currentWorkspace.name !== name) {
-        slug = `${slugify(name, {
-          trim: true,
-          strict: true,
-          lower: true,
-        })}_${nanoid(8)}`;
+        slug = createWorkspaceSlug(name);
       }
     }
     const [updatedWorkspace] = await this.db
@@ -186,12 +185,7 @@ class WorkspacesService {
         slug,
         description,
       })
-      .where(
-        and(
-          eq(workspaces.id, id),
-          eq(workspaces.organizationId, organizationId),
-        ),
-      )
+      .where(and(eq(workspaces.id, id)))
       .returning({
         id: workspaces.id,
       });

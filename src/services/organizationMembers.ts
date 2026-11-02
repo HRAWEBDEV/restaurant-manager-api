@@ -8,6 +8,7 @@ import {
 import type { DBExecuter } from "../db/connect";
 import { organizations } from "../db/schemas/organizations";
 import { user } from "../../auth-schema";
+import { checkUserPermissions } from "../middlewares/checkUserPermissionsMiddleware";
 
 class OrganizationMembersService {
   constructor(private readonly db: DBExecuter) {}
@@ -65,10 +66,9 @@ class OrganizationMembersService {
     organizationId,
     role,
     addedBy,
-  }: Pick<
-    InsertOrganizationMember,
-    "organizationId" | "role" | "userId" | "addedBy"
-  >) {
+  }: Pick<InsertOrganizationMember, "organizationId" | "role" | "userId"> & {
+    addedBy: string;
+  }) {
     const result = await this.db
       .insert(organizationMembers)
       .values({ userId, organizationId, role, addedBy })
@@ -81,17 +81,29 @@ class OrganizationMembersService {
     organizationId,
     id,
     role,
-    updatorRole,
+    updatorId,
   }: Pick<OrganizationMember, "organizationId" | "id" | "role"> & {
-    updatorRole: OrganizationMember["role"];
+    updatorId: string;
   }) {
+    const organizationMember = await this.getOrganizationMember(
+      organizationId,
+      updatorId,
+    );
+    if (
+      !organizationMember ||
+      !checkUserPermissions({
+        type: "organization",
+        organizationRole: organizationMember.role,
+        rolePermission: "organization_member:update",
+      })
+    )
+      return;
     const filtersConditions: (SQLWrapper | undefined)[] = [
       eq(organizationMembers.organizationId, organizationId),
       eq(organizationMembers.id, id),
     ];
-    if (updatorRole === "owner") {
-      filtersConditions.push(not(eq(organizationMembers.role, "owner")));
-    } else if (updatorRole === "admin") {
+    if (organizationMember.role === "owner") {
+    } else if (organizationMember.role === "admin") {
       filtersConditions.push(
         and(
           not(eq(organizationMembers.role, "owner")),
@@ -113,15 +125,30 @@ class OrganizationMembersService {
   async deleteOrganizationMember({
     organizationId,
     id,
-    role,
-  }: Pick<OrganizationMember, "organizationId" | "id" | "role">) {
+    updatorId,
+  }: Pick<OrganizationMember, "organizationId" | "id"> & {
+    updatorId: string;
+  }) {
+    const organizationMember = await this.getOrganizationMember(
+      organizationId,
+      updatorId,
+    );
+    if (
+      !organizationMember ||
+      !checkUserPermissions({
+        type: "organization",
+        organizationRole: organizationMember.role,
+        rolePermission: "organization_member:delete",
+      })
+    )
+      return;
     const filtersConditions: (SQLWrapper | undefined)[] = [
       eq(organizationMembers.organizationId, organizationId),
       eq(organizationMembers.id, id),
     ];
-    if (role === "owner") {
+    if (organizationMember.role === "owner") {
       filtersConditions.push(not(eq(organizationMembers.role, "owner")));
-    } else if (role === "admin") {
+    } else if (organizationMember.role === "admin") {
       filtersConditions.push(
         and(
           not(eq(organizationMembers.role, "owner")),

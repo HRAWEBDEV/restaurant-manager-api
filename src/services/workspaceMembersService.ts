@@ -18,10 +18,11 @@ class WorkspaceMembersService {
   }: {
     filters: {
       workspaceId: string;
+      organizationMemberId?: string;
     };
   }) {
     const addedByUsers = alias(user, "addedByUsers");
-    const members = await this.db
+    let baseQuery = this.db
       .select({
         id: workspaceMembers.id,
         workspaceId: workspaces.id,
@@ -49,6 +50,7 @@ class WorkspaceMembersService {
         userPhoneNumber: user.phoneNumber,
         organizationId: organizations.id,
         organizationName: organizations.name,
+        organizationRole: organizationMembers.role,
       })
       .from(workspaceMembers)
       .innerJoin(workspaces, eq(workspaceMembers.workspaceId, workspaces.id))
@@ -59,23 +61,38 @@ class WorkspaceMembersService {
       .innerJoin(organizations, eq(organizations.id, workspaces.organizationId))
       .innerJoin(user, eq(organizationMembers.userId, user.id))
       .leftJoin(addedByUsers, eq(workspaceMembers.addedBy, addedByUsers.id))
-      .where(eq(workspaceMembers.workspaceId, filters.workspaceId))
+      .$dynamic();
+    const filterConditions = [
+      eq(workspaceMembers.workspaceId, filters.workspaceId),
+    ];
+    if (filters.organizationMemberId) {
+      filterConditions.push(
+        eq(workspaceMembers.organizationMemberId, filters.organizationMemberId),
+      );
+    }
+    baseQuery = baseQuery
+      .where(and(...filterConditions))
       .orderBy(workspaceMembers.joinedAt);
-    return members;
-  }
 
-  async getWorkspaceMember(workspaceId: string, organizationMemberId: string) {
-    const [member] = await this.db
-      .select()
-      .from(workspaceMembers)
-      .where(
-        and(
-          eq(workspaceMembers.workspaceId, workspaceId),
-          eq(workspaceMembers.organizationMemberId, organizationMemberId),
-        ),
-      )
-      .limit(1);
-    return member;
+    if (filters.organizationMemberId) {
+      baseQuery = baseQuery.limit(1);
+    }
+    const result = await baseQuery;
+    return {
+      members: result,
+    };
+  }
+  async getWorkspaceMember(props: {
+    filters: {
+      workspaceId: string;
+      organizationMemberId: string;
+    };
+  }) {
+    return (
+      await this.getWorkspaceMembers({
+        filters: props.filters,
+      })
+    ).members[0];
   }
 
   async createWorkspaceMember({

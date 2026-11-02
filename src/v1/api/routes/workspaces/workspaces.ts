@@ -131,12 +131,12 @@ const handleUpdateWorkspaces: RouteHandler<
   const { id } = c.req.valid("param");
   const data = c.req.valid("json");
   const workspacesService = new WorkspacesService(db);
-  const newWorkspace = await workspacesService.updateWorkspace({
+  const updatedWorkspace = await workspacesService.updateWorkspace({
     ...data,
     userId: user.id,
     id,
   });
-  return c.json(newWorkspace, 200);
+  return c.json(updatedWorkspace, 200);
 };
 
 workspacesRoutes.openapi(updateWorkspacesRoute, handleUpdateWorkspaces);

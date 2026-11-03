@@ -68,7 +68,6 @@ const handleCreateAccount: RouteHandler<
     organization: data["organization"],
     userId: user.id,
   });
-  console.log(result);
   if (!result.success) {
     return handleInternalError(c);
   }

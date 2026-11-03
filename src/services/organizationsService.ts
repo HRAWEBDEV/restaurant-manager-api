@@ -7,9 +7,9 @@ import {
   organizationMembers,
 } from "../db/schemas/organizationMembers";
 import {
-  type InsertOrganization,
-  type Organization,
+  insertOrganizationSchema,
   selectOrganizationSchema,
+  updateOrganizationSchema as defaultUpdateOrganizationSchema,
   organizations,
 } from "../db/schemas/organizations";
 import { checkUserPermissions } from "../middlewares/checkUserPermissionsMiddleware";
@@ -33,6 +33,10 @@ const getOrganizationsSchema = z.object({
       role: z.enum(ogMemberRoles),
     })
     .array(),
+});
+const updateOrganizationSchema = defaultUpdateOrganizationSchema.extend({
+  id: z.string(),
+  userId: z.string(),
 });
 
 type GetOrganizationsResult = z.infer<typeof getOrganizationsSchema>;
@@ -90,9 +94,9 @@ class OrganizationsService {
   async createOrganization({
     name,
     logo,
-  }: Pick<
-    InsertOrganization,
-    "name" | "logo"
+    description,
+  }: z.infer<
+    typeof insertOrganizationSchema
   >): Promise<ModifyOrganizationResult> {
     const slug = createOrganizationSlug(name);
     const result = await this.db
@@ -101,6 +105,7 @@ class OrganizationsService {
         name,
         slug,
         logo,
+        description,
       })
       .returning({
         id: organizations.id,
@@ -116,9 +121,9 @@ class OrganizationsService {
     name,
     logo,
     description,
-  }: Pick<Organization, "id"> & { userId: string } & Partial<
-      Pick<InsertOrganization, "name" | "logo" | "description">
-    >): Promise<ModifyOrganizationResult> {
+  }: z.infer<
+    typeof updateOrganizationSchema
+  >): Promise<ModifyOrganizationResult> {
     let slug: string | undefined = undefined;
     const currentOrganization = await this.getOrganization({
       filters: { userId, organizationId: id },

@@ -4,8 +4,9 @@ import { eq, and, or, sql, isNotNull } from "drizzle-orm";
 import type { DBExecuter } from "../db/connect";
 import {
   type InsertWorkspace,
-  type Workspace,
   selectWorkspaceSchema,
+  insertWorkspaceSchema as defaultInsertWorkspaceSchema,
+  updateWorkspaceSchema as defaultUpdateWorkspaceSchema,
   workspaces,
 } from "../db/schemas/workspaces";
 import { organizations } from "../db/schemas/organizations";
@@ -39,6 +40,13 @@ const getWorkspacesSchema = z.object({
       organizationSlug: z.string(),
     })
     .array(),
+});
+const insertWorkspaceSchema = defaultInsertWorkspaceSchema.extend({
+  createdBy: z.string(),
+});
+const updateWorkspaceSchema = defaultUpdateWorkspaceSchema.extend({
+  id: z.string(),
+  userId: z.string(),
 });
 
 type GetWorkspacesResult = z.infer<typeof getWorkspacesSchema>;
@@ -135,9 +143,7 @@ class WorkspacesService {
     organizationId,
     description,
     createdBy,
-  }: Pick<InsertWorkspace, "name" | "organizationId" | "description"> & {
-    createdBy: string;
-  }): Promise<ModifyWorkspaceResult> {
+  }: z.infer<typeof insertWorkspaceSchema>): Promise<ModifyWorkspaceResult> {
     const organizationService = new OrganizationsService(this.db);
     const organization = await organizationService.getOrganization({
       filters: {
@@ -178,7 +184,8 @@ class WorkspacesService {
   async createPublicWorkspace({
     organizationId,
     createdBy,
-  }: Pick<InsertWorkspace, "organizationId"> & {
+  }: {
+    organizationId: string;
     createdBy: string;
   }) {
     return this.createWorkspace({
@@ -193,9 +200,7 @@ class WorkspacesService {
     userId,
     name,
     description,
-  }: Pick<Workspace, "id"> & { userId: string } & Partial<
-      Pick<InsertWorkspace, "name" | "description">
-    >): Promise<ModifyWorkspaceResult> {
+  }: z.infer<typeof updateWorkspaceSchema>): Promise<ModifyWorkspaceResult> {
     let slug: string | undefined = undefined;
     const currentWorkspace = await this.getWorkspace({
       filters: { userId, workspaceId: id },
@@ -238,7 +243,8 @@ class WorkspacesService {
   async deleteWorkspace({
     id,
     userId,
-  }: Pick<Workspace, "id"> & {
+  }: {
+    id: string;
     userId: string;
   }): Promise<ModifyWorkspaceResult> {
     const currentWorkspace = await this.getWorkspace({

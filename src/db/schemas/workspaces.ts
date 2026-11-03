@@ -36,13 +36,10 @@ const insertWorkspaceSchema = createInsertSchema(workspaces).omit({
   createdBy: true,
   slug: true,
 });
-const updateWorkspaceSchema = createUpdateSchema(workspaces).omit({
+const updateWorkspaceSchema = createUpdateSchema(workspaces).pick({
+  name: true,
+  description: true,
   id: true,
-  updatedAt: true,
-  createdAt: true,
-  createdBy: true,
-  slug: true,
-  organizationId: true,
 });
 export type { Workspace, InsertWorkspace };
 export {

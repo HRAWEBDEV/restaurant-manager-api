@@ -47,15 +47,30 @@ const organizationMembers = snakeCase.table(
   ],
 );
 
-const { createSelectSchema } = createSchemaFactory({
-  zodInstance: z,
-});
+const { createSelectSchema, createInsertSchema, createUpdateSchema } =
+  createSchemaFactory({
+    zodInstance: z,
+  });
 const selectOrganizationMemberSchema = createSelectSchema(organizationMembers);
+const insertOrganizationMemberSchema = createInsertSchema(organizationMembers, {
+  role: z.enum(ogMemberRoles),
+}).omit({
+  id: true,
+  joinedAt: true,
+});
+const updateOrganizationMemberSchema = createUpdateSchema(organizationMembers, {
+  role: z.enum(ogMemberRoles),
+}).pick({
+  id: true,
+  role: true,
+});
 
 export type { OrganizationMember, InsertOrganizationMember };
 export {
   organizationMembers,
   roleEnum,
   selectOrganizationMemberSchema,
+  insertOrganizationMemberSchema,
+  updateOrganizationMemberSchema,
   ogMemberRoles,
 };

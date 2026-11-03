@@ -2,9 +2,9 @@ import { and, eq, not, type SQLWrapper } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import {
   selectOrganizationMemberSchema,
+  updateOrganizationMemberSchema as defaultUpdateOrganizationMemberSchema,
+  insertOrganizationMemberSchema as defaultInsertOrganizationMemberSchema,
   organizationMembers,
-  type InsertOrganizationMember,
-  type OrganizationMember,
   ogMemberRoles,
 } from "../db/schemas/organizationMembers";
 import type { DBExecuter } from "../db/connect";
@@ -35,6 +35,13 @@ const getOrganizationMembersSchema = z.object({
     .array(),
   permissionDenied: z.boolean(),
 });
+const updateOrganizationMemberSchema =
+  defaultUpdateOrganizationMemberSchema.extend({
+    id: z.string(),
+    organizationId: z.string(),
+    updatedBy: z.string(),
+  });
+const insertOrganizationMemberSchema = defaultInsertOrganizationMemberSchema;
 
 type GetOrganizationMembersResult = z.infer<
   typeof getOrganizationMembersSchema
@@ -153,10 +160,7 @@ class OrganizationMembersService {
     organizationId,
     role,
     addedBy,
-  }: Pick<
-    InsertOrganizationMember,
-    "organizationId" | "role" | "userId" | "addedBy"
-  >) {
+  }: z.infer<typeof insertOrganizationMemberSchema>) {
     const result = await this.db
       .insert(organizationMembers)
       .values({ userId, organizationId, role, addedBy })
@@ -170,9 +174,9 @@ class OrganizationMembersService {
     organizationId,
     role,
     updatedBy,
-  }: Pick<OrganizationMember, "organizationId" | "id" | "role"> & {
-    updatedBy: string;
-  }): Promise<ModifyOrganizationMemberResult> {
+  }: z.infer<
+    typeof updateOrganizationMemberSchema
+  >): Promise<ModifyOrganizationMemberResult> {
     const organizationMember = await this.getOrganizationMemberNP({
       filters: {
         userId: updatedBy,
@@ -228,7 +232,9 @@ class OrganizationMembersService {
     organizationId,
     id,
     updatedBy,
-  }: Pick<OrganizationMember, "organizationId" | "id"> & {
+  }: {
+    organizationId: string;
+    id: string;
     updatedBy: string;
   }): Promise<ModifyOrganizationMemberResult> {
     const organizationMember = await this.getOrganizationMemberNP({

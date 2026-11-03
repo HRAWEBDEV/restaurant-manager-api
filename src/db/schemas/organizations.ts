@@ -26,7 +26,12 @@ const insertOrganizationSchema = createInsertSchema(organizations).omit({
   createdAt: true,
   updatedAt: true,
 });
-const updateOrganizationSchema = createUpdateSchema(organizations);
+const updateOrganizationSchema = createUpdateSchema(organizations).pick({
+  id: true,
+  name: true,
+  logo: true,
+  description: true,
+});
 
 export type { Organization, InsertOrganization };
 export {

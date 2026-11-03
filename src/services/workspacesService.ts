@@ -13,6 +13,7 @@ import { workspaceMembers } from "../db/schemas/workspaceMembers";
 import { OrganizationsService } from "./organizationsService";
 import { z } from "@hono/zod-openapi";
 import { ogMemberRoles } from "../db/schemas/organizationMembers";
+import { workspaceRoles } from "../db/schemas/workspaceMembers";
 import { checkUserPermissions } from "../middlewares/checkUserPermissionsMiddleware";
 
 function createWorkspaceSlug(name: string) {
@@ -45,7 +46,7 @@ class WorkspacesService {
         organizationName: organizations.name,
         organizationRole: organizationMembers.role,
         organizationSlug: organizations.slug,
-        workspaceMemberRole: sql<string>`
+        workspaceMemberRole: sql<(typeof workspaceRoles)[number]>`
           CASE
             WHEN ${organizationMembers.role} = ${"owner"}
               THEN ${"admin"}::text
@@ -240,7 +241,7 @@ const getWorkspacesResultSchema: z.ZodType<GetWorkspacesResult> = z.object({
       organizationName: z.string(),
       organizationRole: z.enum(ogMemberRoles),
       organizationSlug: z.string(),
-      workspaceMemberRole: z.string(),
+      workspaceMemberRole: z.enum(workspaceRoles),
     })
     .array(),
 });

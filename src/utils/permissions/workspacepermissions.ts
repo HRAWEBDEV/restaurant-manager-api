@@ -4,8 +4,8 @@ type WorkspaceRolePermissions =
   WorkspacePermissions[keyof WorkspacePermissions][number];
 
 const workspacePermissions = {
-  admin: ["workspace:read", "workspace_member:read"],
-  member: ["workspace:read", "workspace_member:read"],
+  admin: ["organization:read", "workspace:read", "workspace_member:read"],
+  member: ["organization:read", "workspace:read", "workspace_member:read"],
 } as const;
 
 function hasPermission(

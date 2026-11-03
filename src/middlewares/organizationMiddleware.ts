@@ -27,10 +27,13 @@ export const organizationMiddleware: MiddlewareHandler<{
     );
   }
   const organizationMember = new OrganizationMembersService(db);
-  const member = await organizationMember.getOrganizationMember(
-    organizationId,
-    user.id,
-  );
+  const member = await organizationMember.getOrganizationMember({
+    filters: {
+      userId: user.id,
+      selectorUserId: user.id,
+      organizationId,
+    },
+  });
   if (!member) {
     c.status(StatusCodes.FORBIDDEN);
     return c.json(

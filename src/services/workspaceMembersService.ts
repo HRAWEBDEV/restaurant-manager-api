@@ -6,50 +6,76 @@ import {
   workspaceMembers,
   type InsertWorkspaceMember,
   type WorkspaceMember,
+  selectWorkspaceMemberSchema,
 } from "../db/schemas/workspaceMembers";
 import { OrganizationMembersService } from "./organizationMembers";
 import { workspaces } from "../db/schemas/workspaces";
-import { organizationMembers } from "../db/schemas/organizationMembers";
+import {
+  ogMemberRoles,
+  organizationMembers,
+} from "../db/schemas/organizationMembers";
 import { organizations } from "../db/schemas/organizations";
 import { checkUserPermissions } from "../middlewares/checkUserPermissionsMiddleware";
 import { workspaceRoles } from "../db/schemas/workspaceMembers";
 import { WorkspacesService } from "./workspacesService";
+import { z } from "@hono/zod-openapi";
+import {
+  getModifyDataResult,
+  type ModifyData,
+} from "../utils/servicesGenericTypes";
+
+const getWorkspaceMembersSchema = z.object({
+  permissionDenied: z.boolean(),
+  members: selectWorkspaceMemberSchema
+    .extend({
+      role: z.enum(workspaceRoles),
+      workspaceName: z.string(),
+      userId: z.string(),
+      userAvatar: z.string().nullable(),
+      username: z.string().nullable(),
+      userFirstName: z.string(),
+      userLastName: z.string(),
+      userEmail: z.string(),
+      userPhoneNumber: z.string().nullable(),
+      addedByUsername: z.string().nullable(),
+      addedByFirstName: z.string().nullable(),
+      addedByLastName: z.string().nullable(),
+      organizationId: z.string(),
+      organizationName: z.string(),
+      organizationRole: z.enum(ogMemberRoles),
+    })
+    .array(),
+});
+
+type GetWorkspaceMembers = z.infer<typeof getWorkspaceMembersSchema>;
+interface GetWorkspaceMembersProps {
+  filters: {
+    userId?: string;
+    selectorUserId: string;
+    workspaceId: string;
+  };
+}
+interface GetWorkspaceMember {
+  filters: {
+    userId: string;
+    workspaceId: string;
+    selectorUserId: string;
+  };
+}
+
+type ModifyWorkspaceMemberResult = ModifyData<{ id: string }>;
 
 class WorkspaceMembersService {
   constructor(private readonly db: DBExecuter) {}
-  async getWorkspaceMembers({
+  private async getWorkspaceMembersNP({
     filters,
-  }: {
-    filters: {
-      userId?: string;
-      workspaceId: string;
-      selectorUserId: string;
-    };
-  }) {
-    const workspaceService = new WorkspacesService(this.db);
-    const workspace = await workspaceService.getWorkspace({
-      filters: {
-        userId: filters.selectorUserId,
-        workspaceId: filters.workspaceId,
-      },
-    });
-    if (
-      !workspace ||
-      !checkUserPermissions({
-        type: "organizationAndWorkspace",
-        organizationRole: workspace.organizationRole,
-        workspaceRole: workspace.workspaceMemberRole,
-        rolePermission: "workspace_member:read",
-      })
-    )
-      return {
-        members: [],
-      };
+  }: GetWorkspaceMembersProps): Promise<GetWorkspaceMembers> {
     const addedByUsers = alias(user, "addedByUsers");
     let baseQuery = this.db
       .select({
         id: workspaceMembers.id,
         workspaceId: workspaces.id,
+        workspaceName: workspaces.name,
         organizationMemberId: organizationMembers.id,
         role: sql<(typeof workspaceRoles)[number]>`
           CASE
@@ -59,12 +85,6 @@ class WorkspaceMembersService {
               ${workspaceMembers.role}::text
           END
         `,
-        joinedAt: workspaceMembers.joinedAt,
-        addedBy: workspaceMembers.addedBy,
-        addedByUsername: addedByUsers.username,
-        addedByFirstName: addedByUsers.firstName,
-        addedByLastName: addedByUsers.lastName,
-        workspaceName: workspaces.name,
         userId: user.id,
         userAvatar: user.image,
         username: user.username,
@@ -72,6 +92,11 @@ class WorkspaceMembersService {
         userLastName: user.lastName,
         userEmail: user.email,
         userPhoneNumber: user.phoneNumber,
+        joinedAt: workspaceMembers.joinedAt,
+        addedBy: workspaceMembers.addedBy,
+        addedByUsername: addedByUsers.username,
+        addedByFirstName: addedByUsers.firstName,
+        addedByLastName: addedByUsers.lastName,
         organizationId: organizations.id,
         organizationName: organizations.name,
         organizationRole: organizationMembers.role,
@@ -102,7 +127,41 @@ class WorkspaceMembersService {
     const result = await baseQuery;
     return {
       members: result,
+      permissionDenied: false,
     };
+  }
+  async getWorkspaceMembers(
+    props: GetWorkspaceMembersProps,
+  ): Promise<GetWorkspaceMembers> {
+    const workspaceService = new WorkspacesService(this.db);
+    const workspace = await workspaceService.getWorkspace({
+      filters: {
+        userId: props.filters.selectorUserId,
+        workspaceId: props.filters.workspaceId,
+      },
+    });
+    if (
+      !workspace ||
+      !checkUserPermissions({
+        type: "organizationAndWorkspace",
+        organizationRole: workspace.organizationRole,
+        rolePermission: "workspace_member:read",
+        workspaceRole: workspace.role,
+      })
+    ) {
+      return {
+        members: [],
+        permissionDenied: true,
+      };
+    }
+    return this.getWorkspaceMembersNP(props);
+  }
+  private async getWorkspaceMemberNP(props: GetWorkspaceMember) {
+    return (
+      await this.getWorkspaceMembersNP({
+        filters: props.filters,
+      })
+    ).members[0];
   }
   async getWorkspaceMember(props: {
     filters: {
@@ -111,13 +170,8 @@ class WorkspaceMembersService {
       selectorUserId: string;
     };
   }) {
-    return (
-      await this.getWorkspaceMembers({
-        filters: props.filters,
-      })
-    ).members[0];
+    return this.getWorkspaceMemberNP(props);
   }
-
   async createWorkspaceMember({
     newMemberUserId,
     workspaceId,
@@ -127,7 +181,7 @@ class WorkspaceMembersService {
     newMemberUserId: string;
     organizationId: string;
     addedBy: string;
-  }) {
+  }): Promise<ModifyWorkspaceMemberResult> {
     const workspaceService = new WorkspacesService(this.db);
     const workspace = await workspaceService.getWorkspace({
       filters: {
@@ -135,16 +189,22 @@ class WorkspaceMembersService {
         userId: addedBy,
       },
     });
+    if (!workspace) {
+      return getModifyDataResult({
+        notFound: true,
+      });
+    }
     if (
-      !workspace ||
       !checkUserPermissions({
         type: "organizationAndWorkspace",
         organizationRole: workspace.organizationRole,
-        workspaceRole: workspace.workspaceMemberRole,
+        workspaceRole: workspace.role,
         rolePermission: "workspace_member:create",
       })
     )
-      return;
+      return getModifyDataResult({
+        permissionDenied: true,
+      });
     const organizationMemberService = new OrganizationMembersService(this.db);
     const targetOrganizationMember =
       await organizationMemberService.getOrganizationMember({
@@ -154,7 +214,10 @@ class WorkspaceMembersService {
           organizationId: workspace.organizationId,
         },
       });
-    if (!targetOrganizationMember) return;
+    if (!targetOrganizationMember)
+      return getModifyDataResult({
+        notFound: true,
+      });
     const [createdWorkspaceMember] = await this.db
       .insert(workspaceMembers)
       .values({
@@ -164,7 +227,9 @@ class WorkspaceMembersService {
         addedBy,
       })
       .returning({ id: workspaceMembers.id });
-    return createdWorkspaceMember;
+    return getModifyDataResult({
+      data: createdWorkspaceMember,
+    });
   }
   async updateWorkspaceMember({
     memberUserId,
@@ -174,7 +239,7 @@ class WorkspaceMembersService {
   }: Pick<WorkspaceMember, "role" | "workspaceId"> & {
     memberUserId: string;
     updatedBy: string;
-  }) {
+  }): Promise<ModifyWorkspaceMemberResult> {
     const workspaceService = new WorkspacesService(this.db);
     const workspace = await workspaceService.getWorkspace({
       filters: {
@@ -182,30 +247,30 @@ class WorkspaceMembersService {
         userId: updatedBy,
       },
     });
+    if (!workspace) return getModifyDataResult({ notFound: true });
     if (
-      !workspace ||
       !checkUserPermissions({
         type: "organizationAndWorkspace",
         organizationRole: workspace.organizationRole,
-        workspaceRole: workspace.workspaceMemberRole,
+        workspaceRole: workspace.role,
         rolePermission: "workspace_member:update",
       })
     )
-      return;
-    const targetWorkspaceMember = await this.getWorkspaceMember({
+      return getModifyDataResult({ permissionDenied: true });
+    const targetWorkspaceMember = await this.getWorkspaceMemberNP({
       filters: {
         selectorUserId: updatedBy,
         userId: memberUserId,
         workspaceId,
       },
     });
-    if (!targetWorkspaceMember) return;
+    if (!targetWorkspaceMember) return getModifyDataResult({ notFound: true });
     const [updatedMember] = await this.db
       .update(workspaceMembers)
       .set({ role })
       .where(and(eq(workspaceMembers.id, targetWorkspaceMember.id)))
       .returning({ id: workspaceMembers.id, role: workspaceMembers.role });
-    return updatedMember;
+    return getModifyDataResult({ data: updatedMember });
   }
 
   async deleteWorkspaceMember({
@@ -215,7 +280,7 @@ class WorkspaceMembersService {
   }: Pick<WorkspaceMember, "workspaceId"> & {
     memberUserId: string;
     deletedBy: string;
-  }) {
+  }): Promise<ModifyWorkspaceMemberResult> {
     const workspaceService = new WorkspacesService(this.db);
     const workspace = await workspaceService.getWorkspace({
       filters: {
@@ -223,31 +288,42 @@ class WorkspaceMembersService {
         userId: deletedBy,
       },
     });
+    if (!workspace)
+      return getModifyDataResult({
+        notFound: true,
+      });
+
     if (
-      !workspace ||
       !checkUserPermissions({
         type: "organizationAndWorkspace",
         organizationRole: workspace.organizationRole,
-        workspaceRole: workspace.workspaceMemberRole,
+        workspaceRole: workspace.role,
         rolePermission: "workspace_member:delete",
       })
     )
-      return;
-    const targetWorkspaceMember = await this.getWorkspaceMember({
+      return getModifyDataResult({
+        permissionDenied: true,
+      });
+    const targetWorkspaceMember = await this.getWorkspaceMemberNP({
       filters: {
         selectorUserId: deletedBy,
         userId: memberUserId,
         workspaceId,
       },
     });
-    if (!targetWorkspaceMember) return;
+    if (!targetWorkspaceMember)
+      return getModifyDataResult({
+        notFound: true,
+      });
     const [deletedMember] = await this.db
       .delete(workspaceMembers)
       .where(and(eq(workspaceMembers.id, targetWorkspaceMember.id)))
       .returning({
         id: workspaceMembers.id,
       });
-    return deletedMember;
+    return getModifyDataResult({
+      data: deletedMember,
+    });
   }
 }
 

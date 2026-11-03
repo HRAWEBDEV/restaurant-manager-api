@@ -1,6 +1,6 @@
 import { createMiddleware } from "hono/factory";
 import { type MiddlewareHandler } from "hono";
-import { type AuthContext } from "../utils/AuthContext";
+import { getContextUser, type AuthContext } from "../utils/AuthContext";
 import { StatusCodes } from "http-status-codes";
 import { getApiErrorShape } from "../utils/apiTypes";
 import { WorkspaceMembersService } from "../services/workspaceMembersService";
@@ -15,6 +15,7 @@ export const workspaceMiddleware: MiddlewareHandler<{
   Variables: AuthContext;
 }> = createMiddleware(async (c, next) => {
   const organizationMember = getContextUserOrganizationMember(c);
+  const user = getContextUser(c);
   const workspaceId = getHeaderWorkspaceID(c);
   if (!workspaceId) {
     c.status(StatusCodes.BAD_REQUEST);
@@ -26,14 +27,15 @@ export const workspaceMiddleware: MiddlewareHandler<{
       }),
     );
   }
-  if (organizationMember.role) {
+  if (organizationMember.role === "owner") {
     setContextUserWorkspaceMemberRole(c, "admin");
   } else {
     const worksapceMemberService = new WorkspaceMembersService(db);
     const member = await worksapceMemberService.getWorkspaceMember({
       filters: {
         workspaceId,
-        organizationMemberId: organizationMember.id,
+        selectorUserId: user.id,
+        userId: user.id,
       },
     });
     if (!member) {

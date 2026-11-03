@@ -33,7 +33,7 @@ class OrganizationMembersService {
       !organization ||
       !checkUserPermissions({
         type: "organization",
-        organizationRole: organization.userRole,
+        organizationRole: organization.role,
         rolePermission: "organization_member:read",
       })
     )

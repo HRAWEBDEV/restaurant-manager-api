@@ -17,25 +17,35 @@ class AccountServices {
     >;
     userId: string;
   }) {
-    await this.db.transaction(async (tx) => {
+    const createdWorkspaceMember = await this.db.transaction(async (tx) => {
       const organizationsService = new OrganizationsService(tx);
       const organizationMembersService = new OrganizationMembersService(tx);
       const workspacesService = new WorkspacesService(tx);
-      new WorkspaceMembersService(tx);
+      const workspaceMemberService = new WorkspaceMembersService(tx);
       const createdOrganization =
         await organizationsService.createOrganization(organization);
-      await organizationMembersService.createMember({
+      const createdMember = await organizationMembersService.createMember({
         userId,
         organizationId: createdOrganization!.data!.id,
         role: "owner",
       });
-      await workspacesService.createPublicWorkspace({
+      const createdWorkspace = await workspacesService.createPublicWorkspace({
         createdBy: userId,
         organizationId: createdOrganization!.data!.id,
       });
+      const createdWorkspaceMember =
+        await workspaceMemberService.createWorkspaceMember({
+          newMemberUserId: userId,
+          organizationId: createdOrganization.data!.id!,
+          workspaceId: createdWorkspace.data!.id!,
+          type: "systematic",
+          role: "admin",
+          organizationMemberId: createdMember!.id,
+        });
+      return createdWorkspaceMember;
     });
     return {
-      message: "account created successfully",
+      success: !!createdWorkspaceMember.data?.id,
     };
   }
 }

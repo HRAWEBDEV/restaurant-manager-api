@@ -180,52 +180,68 @@ class WorkspaceMembersService {
     newMemberUserId,
     workspaceId,
     role,
-    addedBy,
+    ...props
   }: Pick<InsertWorkspaceMember, "workspaceId" | "role"> & {
     newMemberUserId: string;
     organizationId: string;
-    addedBy: string;
-  }): Promise<ModifyWorkspaceMemberResult> {
-    const actorMember = await this.getWorkspaceMemberNP({
-      filters: {
-        workspaceId,
-        selectorUserId: addedBy,
-        userId: addedBy,
-      },
-    });
-    if (!actorMember) {
-      return getModifyDataResult({
-        notFound: true,
-      });
-    }
-    if (
-      !checkUserPermissions({
-        type: "organizationAndWorkspace",
-        organizationRole: actorMember.organizationRole,
-        workspaceRole: actorMember.role,
-        rolePermission: "workspace_member:create",
-      })
-    )
-      return getModifyDataResult({
-        permissionDenied: true,
-      });
-    const organizationMemberService = new OrganizationMembersService(this.db);
-    const targetOrganizationMember =
-      await organizationMemberService.getOrganizationMember({
+  } & (
+      | {
+          type: "manually";
+          addedBy: string;
+        }
+      | {
+          type: "systematic";
+          organizationMemberId: string;
+        }
+    )): Promise<ModifyWorkspaceMemberResult> {
+    let addedBy = null;
+    let organizationMemberId = null;
+    if (props.type === "manually") {
+      addedBy = props.addedBy;
+      const actorMember = await this.getWorkspaceMemberNP({
         filters: {
-          userId: newMemberUserId,
-          selectorUserId: addedBy,
-          organizationId: actorMember.organizationId,
+          workspaceId,
+          selectorUserId: props.addedBy,
+          userId: props.addedBy,
         },
       });
-    if (!targetOrganizationMember)
-      return getModifyDataResult({
-        notFound: true,
-      });
+      if (!actorMember) {
+        return getModifyDataResult({
+          notFound: true,
+        });
+      }
+      if (
+        !checkUserPermissions({
+          type: "organizationAndWorkspace",
+          organizationRole: actorMember.organizationRole,
+          workspaceRole: actorMember.role,
+          rolePermission: "workspace_member:create",
+        })
+      )
+        return getModifyDataResult({
+          permissionDenied: true,
+        });
+      const organizationMemberService = new OrganizationMembersService(this.db);
+      const targetOrganizationMember =
+        await organizationMemberService.getOrganizationMember({
+          filters: {
+            userId: newMemberUserId,
+            selectorUserId: props.addedBy,
+            organizationId: actorMember.organizationId,
+          },
+        });
+      if (!targetOrganizationMember)
+        return getModifyDataResult({
+          notFound: true,
+        });
+      organizationMemberId = targetOrganizationMember.id;
+    } else {
+      organizationMemberId = props.organizationMemberId;
+    }
     const [createdWorkspaceMember] = await this.db
       .insert(workspaceMembers)
       .values({
-        organizationMemberId: targetOrganizationMember.id,
+        organizationMemberId,
         workspaceId,
         role,
         addedBy,

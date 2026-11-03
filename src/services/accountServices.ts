@@ -26,12 +26,12 @@ class AccountServices {
         await organizationsService.createOrganization(organization);
       await organizationMembersService.createMember({
         userId,
-        organizationId: createdOrganization!.id,
+        organizationId: createdOrganization!.data!.id,
         role: "owner",
       });
       await workspacesService.createPublicWorkspace({
         createdBy: userId,
-        organizationId: createdOrganization!.id,
+        organizationId: createdOrganization!.data!.id,
       });
     });
     return {

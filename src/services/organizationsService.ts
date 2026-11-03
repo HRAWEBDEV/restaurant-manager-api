@@ -3,16 +3,21 @@ import { nanoid } from "nanoid";
 import { eq, and } from "drizzle-orm";
 import type { DBExecuter } from "../db/connect";
 import {
-  organizationMembers,
   ogMemberRoles,
+  organizationMembers,
 } from "../db/schemas/organizationMembers";
 import {
   type InsertOrganization,
   type Organization,
+  selectOrganizationSchema,
   organizations,
 } from "../db/schemas/organizations";
-import { z } from "@hono/zod-openapi";
 import { checkUserPermissions } from "../middlewares/checkUserPermissionsMiddleware";
+import {
+  type ModifyData,
+  getModifyDataResult,
+} from "../utils/servicesGenericTypes";
+import { z } from "@hono/zod-openapi";
 
 function createOrganizationSlug(name: string) {
   return `${slugify(name, {
@@ -21,6 +26,17 @@ function createOrganizationSlug(name: string) {
     trim: true,
   })}_${nanoid(8)}`;
 }
+
+const getOrganizationsSchema = z.object({
+  organizations: selectOrganizationSchema
+    .extend({
+      role: z.enum(ogMemberRoles),
+    })
+    .array(),
+});
+
+type GetOrganizationsResult = z.infer<typeof getOrganizationsSchema>;
+type ModifyOrganizationResult = ModifyData<{ id: string }>;
 
 class OrganizationsService {
   constructor(private readonly db: DBExecuter) {}
@@ -31,7 +47,7 @@ class OrganizationsService {
       userId: string;
       organizationId?: string;
     };
-  }) {
+  }): Promise<GetOrganizationsResult> {
     const filterConditions = [eq(organizationMembers.userId, userId)];
     if (organizationId) {
       filterConditions.push(eq(organizations.id, organizationId));
@@ -45,7 +61,7 @@ class OrganizationsService {
         description: organizations.description,
         createdAt: organizations.createdAt,
         updatedAt: organizations.updatedAt,
-        userRole: organizationMembers.role,
+        role: organizationMembers.role,
       })
       .from(organizations)
       .innerJoin(
@@ -74,7 +90,10 @@ class OrganizationsService {
   async createOrganization({
     name,
     logo,
-  }: Pick<InsertOrganization, "name" | "logo">) {
+  }: Pick<
+    InsertOrganization,
+    "name" | "logo"
+  >): Promise<ModifyOrganizationResult> {
     const slug = createOrganizationSlug(name);
     const result = await this.db
       .insert(organizations)
@@ -86,7 +105,9 @@ class OrganizationsService {
       .returning({
         id: organizations.id,
       });
-    return result[0];
+    return getModifyDataResult({
+      data: result[0],
+    });
   }
 
   async updateOrganization({
@@ -97,20 +118,27 @@ class OrganizationsService {
     description,
   }: Pick<Organization, "id"> & { userId: string } & Partial<
       Pick<InsertOrganization, "name" | "logo" | "description">
-    >) {
+    >): Promise<ModifyOrganizationResult> {
     let slug: string | undefined = undefined;
     const currentOrganization = await this.getOrganization({
       filters: { userId, organizationId: id },
     });
+    if (!currentOrganization) {
+      return getModifyDataResult({
+        notFound: true,
+      });
+    }
     if (
-      !currentOrganization ||
       !checkUserPermissions({
         type: "organization",
-        organizationRole: currentOrganization.userRole,
+        organizationRole: currentOrganization.role,
         rolePermission: "organization:update",
       })
     )
-      return undefined;
+      return getModifyDataResult({
+        permissionDenied: true,
+      });
+
     if (name) {
       if (currentOrganization.name !== name) {
         slug = createOrganizationSlug(name);
@@ -128,27 +156,11 @@ class OrganizationsService {
       .returning({
         id: organizations.id,
       });
-    return updatedOrganization;
+    return getModifyDataResult({
+      data: updatedOrganization,
+    });
   }
 }
 
-type GetOrganizationsResult = Awaited<
-  ReturnType<OrganizationsService["getOrganizations"]>
->;
-const getOrganizationsResultSchema: z.ZodType<GetOrganizationsResult> =
-  z.object({
-    organizations: z
-      .object({
-        id: z.string(),
-        name: z.string(),
-        logo: z.string().nullable(),
-        slug: z.string(),
-        description: z.string().nullable(),
-        createdAt: z.date(),
-        updatedAt: z.date(),
-        userRole: z.enum(ogMemberRoles),
-      })
-      .array(),
-  });
-
-export { OrganizationsService, getOrganizationsResultSchema };
+export type { GetOrganizationsResult };
+export { OrganizationsService, getOrganizationsSchema };

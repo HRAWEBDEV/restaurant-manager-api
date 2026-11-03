@@ -10,7 +10,7 @@ import {
 } from "../../../../utils/AuthContext";
 import {
   WorkspacesService,
-  getWorkspacesResultSchema,
+  getWorkspacesSchema,
 } from "../../../../services/workspacesService";
 import {
   insertWorkspaceSchema,
@@ -32,7 +32,7 @@ const getWorkspacesRoute = createRoute({
     200: {
       content: {
         "application/json": {
-          schema: getWorkspacesResultSchema,
+          schema: getWorkspacesSchema,
         },
       },
     },

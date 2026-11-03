@@ -3,9 +3,10 @@ import { nanoid } from "nanoid";
 import { eq, and, or, sql, isNotNull } from "drizzle-orm";
 import type { DBExecuter } from "../db/connect";
 import {
-  workspaces,
   type InsertWorkspace,
   type Workspace,
+  selectWorkspaceSchema,
+  workspaces,
 } from "../db/schemas/workspaces";
 import { organizations } from "../db/schemas/organizations";
 import { organizationMembers } from "../db/schemas/organizationMembers";
@@ -15,6 +16,10 @@ import { z } from "@hono/zod-openapi";
 import { ogMemberRoles } from "../db/schemas/organizationMembers";
 import { workspaceRoles } from "../db/schemas/workspaceMembers";
 import { checkUserPermissions } from "../middlewares/checkUserPermissionsMiddleware";
+import {
+  getModifyDataResult,
+  type ModifyData,
+} from "../utils/servicesGenericTypes";
 
 function createWorkspaceSlug(name: string) {
   return `${slugify(name, {
@@ -23,6 +28,21 @@ function createWorkspaceSlug(name: string) {
     lower: true,
   })}_${nanoid(8)}`;
 }
+
+const getWorkspacesSchema = z.object({
+  workspaces: selectWorkspaceSchema
+    .extend({
+      role: z.enum(workspaceRoles),
+      organizationId: z.string(),
+      organizationName: z.string(),
+      organizationRole: z.enum(ogMemberRoles),
+      organizationSlug: z.string(),
+    })
+    .array(),
+});
+
+type GetWorkspacesResult = z.infer<typeof getWorkspacesSchema>;
+type ModifyWorkspaceResult = ModifyData<{ id: string }>;
 
 class WorkspacesService {
   constructor(private readonly db: DBExecuter) {}
@@ -34,7 +54,7 @@ class WorkspacesService {
       organizationId?: string;
       workspaceId?: string;
     };
-  }) {
+  }): Promise<GetWorkspacesResult> {
     let baseQuery = this.db
       .select({
         id: workspaces.id,
@@ -42,11 +62,9 @@ class WorkspacesService {
         slug: workspaces.slug,
         description: workspaces.description,
         createdBy: workspaces.createdBy,
-        organizationId: workspaces.organizationId,
-        organizationName: organizations.name,
-        organizationRole: organizationMembers.role,
-        organizationSlug: organizations.slug,
-        workspaceMemberRole: sql<(typeof workspaceRoles)[number]>`
+        createdAt: workspaces.createdAt,
+        updatedAt: workspaces.updatedAt,
+        role: sql<(typeof workspaceRoles)[number]>`
           CASE
             WHEN ${organizationMembers.role} = ${"owner"}
               THEN ${"admin"}::text
@@ -54,6 +72,10 @@ class WorkspacesService {
               ${workspaceMembers.role}::text
           END
         `,
+        organizationId: workspaces.organizationId,
+        organizationName: organizations.name,
+        organizationRole: organizationMembers.role,
+        organizationSlug: organizations.slug,
       })
       .from(workspaces)
       .innerJoin(organizations, eq(organizations.id, workspaces.organizationId))
@@ -115,7 +137,7 @@ class WorkspacesService {
     createdBy,
   }: Pick<InsertWorkspace, "name" | "organizationId" | "description"> & {
     createdBy: string;
-  }) {
+  }): Promise<ModifyWorkspaceResult> {
     const organizationService = new OrganizationsService(this.db);
     const organization = await organizationService.getOrganization({
       filters: {
@@ -123,15 +145,21 @@ class WorkspacesService {
         organizationId,
       },
     });
+    if (!organization) {
+      return getModifyDataResult({
+        notFound: true,
+      });
+    }
     if (
-      !organization ||
       !checkUserPermissions({
         type: "organization",
-        organizationRole: organization.userRole,
+        organizationRole: organization.role,
         rolePermission: "workspace:create",
       })
     )
-      return undefined;
+      return getModifyDataResult({
+        permissionDenied: true,
+      });
     const slug = createWorkspaceSlug(name);
     const [createdWorkspace] = await this.db
       .insert(workspaces)
@@ -143,7 +171,9 @@ class WorkspacesService {
         createdBy,
       })
       .returning({ id: workspaces.id });
-    return createdWorkspace;
+    return getModifyDataResult({
+      data: createdWorkspace,
+    });
   }
   async createPublicWorkspace({
     organizationId,
@@ -165,20 +195,26 @@ class WorkspacesService {
     description,
   }: Pick<Workspace, "id"> & { userId: string } & Partial<
       Pick<InsertWorkspace, "name" | "description">
-    >) {
+    >): Promise<ModifyWorkspaceResult> {
     let slug: string | undefined = undefined;
     const currentWorkspace = await this.getWorkspace({
       filters: { userId, workspaceId: id },
     });
+    if (!currentWorkspace) {
+      return getModifyDataResult({
+        notFound: true,
+      });
+    }
     if (
-      !currentWorkspace ||
       !checkUserPermissions({
         type: "organization",
         organizationRole: currentWorkspace.organizationRole,
         rolePermission: "workspace:update",
       })
     )
-      return undefined;
+      return getModifyDataResult({
+        permissionDenied: true,
+      });
     if (name) {
       if (currentWorkspace && currentWorkspace.name !== name) {
         slug = createWorkspaceSlug(name);
@@ -195,55 +231,44 @@ class WorkspacesService {
       .returning({
         id: workspaces.id,
       });
-    return updatedWorkspace;
+    return getModifyDataResult({
+      data: updatedWorkspace,
+    });
   }
   async deleteWorkspace({
     id,
     userId,
   }: Pick<Workspace, "id"> & {
     userId: string;
-  }) {
+  }): Promise<ModifyWorkspaceResult> {
     const currentWorkspace = await this.getWorkspace({
       filters: { userId, workspaceId: id },
     });
+    if (!currentWorkspace) {
+      return getModifyDataResult({
+        notFound: true,
+      });
+    }
     if (
-      !currentWorkspace ||
       !checkUserPermissions({
         type: "organization",
         organizationRole: currentWorkspace.organizationRole,
         rolePermission: "workspace:delete",
       })
     )
-      return;
+      return getModifyDataResult({
+        permissionDenied: true,
+      });
     const [deletedWorkspace] = await this.db
       .delete(workspaces)
       .where(and(eq(workspaces.id, id)))
       .returning({
         id: workspaces.id,
       });
-    return deletedWorkspace;
+    return getModifyDataResult({
+      data: deletedWorkspace,
+    });
   }
 }
 
-type GetWorkspacesResult = Awaited<
-  ReturnType<WorkspacesService["getWorkspaces"]>
->;
-
-const getWorkspacesResultSchema: z.ZodType<GetWorkspacesResult> = z.object({
-  workspaces: z
-    .object({
-      id: z.string(),
-      name: z.string(),
-      slug: z.string(),
-      description: z.string().nullable(),
-      createdBy: z.string().nullable(),
-      organizationId: z.string(),
-      organizationName: z.string(),
-      organizationRole: z.enum(ogMemberRoles),
-      organizationSlug: z.string(),
-      workspaceMemberRole: z.enum(workspaceRoles),
-    })
-    .array(),
-});
-
-export { WorkspacesService, getWorkspacesResultSchema };
+export { WorkspacesService, getWorkspacesSchema };

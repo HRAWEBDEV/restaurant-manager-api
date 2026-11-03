@@ -19,7 +19,7 @@ import {
 } from "../../../../utils/uploadFileService";
 import {
   OrganizationsService,
-  getOrganizationsResultSchema,
+  getOrganizationsSchema,
 } from "../../../../services/organizationsService";
 import { db } from "../../../../db/connect";
 
@@ -256,7 +256,7 @@ const userOrganizationsRoute = createRoute({
     200: {
       content: {
         "application/json": {
-          schema: getOrganizationsResultSchema,
+          schema: getOrganizationsSchema,
         },
       },
     },

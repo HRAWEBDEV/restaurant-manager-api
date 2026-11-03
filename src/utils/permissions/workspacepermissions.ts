@@ -4,7 +4,14 @@ type WorkspaceRolePermissions =
   WorkspacePermissions[keyof WorkspacePermissions][number];
 
 const workspacePermissions = {
-  admin: ["organization:read", "workspace:read", "workspace_member:read"],
+  admin: [
+    "organization:read",
+    "workspace:read",
+    "workspace_member:read",
+    "workspace_member:create",
+    "workspace_member:update",
+    "workspace_member:delete",
+  ],
   member: ["organization:read", "workspace:read", "workspace_member:read"],
 } as const;
 

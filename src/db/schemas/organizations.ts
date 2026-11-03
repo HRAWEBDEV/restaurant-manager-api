@@ -15,9 +15,11 @@ const organizations = snakeCase.table("organizations", {
   ...trackChanges,
 });
 
-const { createInsertSchema, createUpdateSchema } = createSchemaFactory({
-  zodInstance: z,
-});
+const { createSelectSchema, createInsertSchema, createUpdateSchema } =
+  createSchemaFactory({
+    zodInstance: z,
+  });
+const selectOrganizationSchema = createSelectSchema(organizations);
 const insertOrganizationSchema = createInsertSchema(organizations).omit({
   id: true,
   slug: true,
@@ -27,4 +29,9 @@ const insertOrganizationSchema = createInsertSchema(organizations).omit({
 const updateOrganizationSchema = createUpdateSchema(organizations);
 
 export type { Organization, InsertOrganization };
-export { organizations, insertOrganizationSchema, updateOrganizationSchema };
+export {
+  organizations,
+  insertOrganizationSchema,
+  updateOrganizationSchema,
+  selectOrganizationSchema,
+};

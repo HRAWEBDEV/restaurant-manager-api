@@ -9,8 +9,8 @@ import {
   type AuthContext,
 } from "../../../../utils/AuthContext";
 import {
-  getOrganizationsResultSchema,
   OrganizationsService,
+  getOrganizationsSchema,
 } from "../../../../services/organizationsService";
 import { db } from "../../../../db/connect";
 import {
@@ -248,7 +248,7 @@ const getOrganizationsRoute = createRoute({
     200: {
       content: {
         "application/json": {
-          schema: getOrganizationsResultSchema,
+          schema: getOrganizationsSchema,
         },
       },
     },

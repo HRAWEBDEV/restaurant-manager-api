@@ -170,7 +170,11 @@ class WorkspaceMembersService {
       selectorUserId: string;
     };
   }) {
-    return this.getWorkspaceMemberNP(props);
+    return (
+      await this.getWorkspaceMembers({
+        filters: props.filters,
+      })
+    ).members[0];
   }
   async createWorkspaceMember({
     newMemberUserId,

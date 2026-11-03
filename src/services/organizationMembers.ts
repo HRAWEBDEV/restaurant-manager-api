@@ -1,45 +1,67 @@
 import { and, eq, not, type SQLWrapper } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import {
+  selectOrganizationMemberSchema,
   organizationMembers,
   type InsertOrganizationMember,
   type OrganizationMember,
+  ogMemberRoles,
 } from "../db/schemas/organizationMembers";
 import type { DBExecuter } from "../db/connect";
 import { organizations } from "../db/schemas/organizations";
 import { user } from "../../auth-schema";
 import { checkUserPermissions } from "../middlewares/checkUserPermissionsMiddleware";
 import { OrganizationsService } from "./organizationsService";
+import { z } from "@hono/zod-openapi";
+import {
+  getModifyDataResult,
+  type ModifyData,
+} from "../utils/servicesGenericTypes";
+
+const getOrganizationMembersSchema = z.object({
+  members: selectOrganizationMemberSchema
+    .extend({
+      username: z.string().nullable(),
+      userFirstName: z.string(),
+      userLastName: z.string(),
+      userEmail: z.string(),
+      userAvatar: z.string().nullable(),
+      userPhoneNumber: z.string().nullable(),
+      organizationName: z.string(),
+      role: z.enum(ogMemberRoles),
+      addedByUsername: z.string().nullable(),
+      addedByFirstName: z.string().nullable(),
+      addedByLastName: z.string().nullable(),
+    })
+    .array(),
+  permissionDenied: z.boolean(),
+});
+
+type GetOrganizationMembersResult = z.infer<
+  typeof getOrganizationMembersSchema
+>;
+interface GetOrganizationMembersProps {
+  filters: {
+    userId?: string;
+    organizationId: string;
+    selectorUserId: string;
+  };
+}
+interface GetOrganizationMemberProps {
+  filters: {
+    userId: string;
+    organizationId: string;
+    selectorUserId: string;
+  };
+}
+
+type ModifyOrganizationMemberResult = ModifyData<{ id: string }>;
 
 class OrganizationMembersService {
   constructor(private readonly db: DBExecuter) {}
-  async getOrganizationsMembers({
+  private async getOrganizationMembersNP({
     filters,
-  }: {
-    filters: {
-      userId?: string;
-      organizationId: string;
-      selectorUserId: string;
-    };
-  }) {
-    const organizationService = new OrganizationsService(this.db);
-    const organization = await organizationService.getOrganization({
-      filters: {
-        userId: filters.selectorUserId,
-        organizationId: filters.organizationId,
-      },
-    });
-    if (
-      !organization ||
-      !checkUserPermissions({
-        type: "organization",
-        organizationRole: organization.role,
-        rolePermission: "organization_member:read",
-      })
-    )
-      return {
-        members: [],
-      };
+  }: GetOrganizationMembersProps): Promise<GetOrganizationMembersResult> {
     const addedByUsers = alias(user, "addedByUsers");
     const filterConditions = [
       eq(organizationMembers.organizationId, filters.organizationId),
@@ -81,19 +103,48 @@ class OrganizationMembersService {
       baseQuery.limit(1);
     }
     const members = await baseQuery;
-    return { members };
+    return { members, permissionDenied: false };
   }
-  async getOrganizationMember({
+
+  async getOrganizationMembers(
+    props: GetOrganizationMembersProps,
+  ): Promise<GetOrganizationMembersResult> {
+    const organizationService = new OrganizationsService(this.db);
+    const organization = await organizationService.getOrganization({
+      filters: {
+        userId: props.filters.selectorUserId,
+        organizationId: props.filters.organizationId,
+      },
+    });
+    if (
+      !organization ||
+      !checkUserPermissions({
+        type: "organization",
+        organizationRole: organization.role,
+        rolePermission: "organization_member:read",
+      })
+    )
+      return {
+        members: [],
+        permissionDenied: true,
+      };
+
+    return this.getOrganizationMembersNP(props);
+  }
+
+  private async getOrganizationMemberNP({
     filters,
-  }: {
-    filters: {
-      userId: string;
-      organizationId: string;
-      selectorUserId: string;
-    };
-  }) {
+  }: GetOrganizationMemberProps) {
     return (
-      await this.getOrganizationsMembers({
+      await this.getOrganizationMembersNP({
+        filters,
+      })
+    ).members[0];
+  }
+
+  async getOrganizationMember({ filters }: GetOrganizationMemberProps) {
+    return (
+      await this.getOrganizationMembers({
         filters,
       })
     ).members[0];
@@ -122,30 +173,38 @@ class OrganizationMembersService {
     updatedBy,
   }: Pick<OrganizationMember, "organizationId" | "id" | "role"> & {
     updatedBy: string;
-  }) {
-    const organizationMember = await this.getOrganizationMember({
+  }): Promise<ModifyOrganizationMemberResult> {
+    const organizationMember = await this.getOrganizationMemberNP({
       filters: {
         userId: updatedBy,
         selectorUserId: updatedBy,
         organizationId,
       },
     });
+    if (!organizationMember)
+      return getModifyDataResult({
+        notFound: true,
+      });
     if (
-      !organizationMember ||
       !checkUserPermissions({
         type: "organization",
         organizationRole: organizationMember.role,
         rolePermission: "organization_member:update",
       })
     )
-      return;
+      return getModifyDataResult({
+        permissionDenied: true,
+      });
     const filtersConditions: (SQLWrapper | undefined)[] = [
       eq(organizationMembers.organizationId, organizationId),
       eq(organizationMembers.id, id),
     ];
     if (organizationMember.role === "owner") {
     } else if (organizationMember.role === "admin") {
-      if (role === "owner") return;
+      if (role === "owner")
+        return getModifyDataResult({
+          permissionDenied: true,
+        });
       filtersConditions.push(
         and(
           not(eq(organizationMembers.role, "owner")),
@@ -161,7 +220,9 @@ class OrganizationMembersService {
         id: organizationMembers.id,
         role: organizationMembers.role,
       });
-    return updatedMember;
+    return getModifyDataResult({
+      data: updatedMember,
+    });
   }
 
   async deleteOrganizationMember({
@@ -170,23 +231,28 @@ class OrganizationMembersService {
     updatedBy,
   }: Pick<OrganizationMember, "organizationId" | "id"> & {
     updatedBy: string;
-  }) {
-    const organizationMember = await this.getOrganizationMember({
+  }): Promise<ModifyOrganizationMemberResult> {
+    const organizationMember = await this.getOrganizationMemberNP({
       filters: {
         organizationId,
         userId: updatedBy,
         selectorUserId: updatedBy,
       },
     });
+    if (!organizationMember)
+      return getModifyDataResult({
+        notFound: true,
+      });
     if (
-      !organizationMember ||
       !checkUserPermissions({
         type: "organization",
         organizationRole: organizationMember.role,
         rolePermission: "organization_member:delete",
       })
     )
-      return;
+      return getModifyDataResult({
+        permissionDenied: true,
+      });
     const filtersConditions: (SQLWrapper | undefined)[] = [
       eq(organizationMembers.organizationId, organizationId),
       eq(organizationMembers.id, id),
@@ -207,7 +273,9 @@ class OrganizationMembersService {
       .returning({
         id: organizationMembers.id,
       });
-    return deleteOrganizationMember;
+    return getModifyDataResult({
+      data: deleteOrganizationMember,
+    });
   }
 }
 

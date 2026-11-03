@@ -186,14 +186,14 @@ class WorkspaceMembersService {
     organizationId: string;
     addedBy: string;
   }): Promise<ModifyWorkspaceMemberResult> {
-    const workspaceService = new WorkspacesService(this.db);
-    const workspace = await workspaceService.getWorkspace({
+    const actorMember = await this.getWorkspaceMemberNP({
       filters: {
         workspaceId,
+        selectorUserId: addedBy,
         userId: addedBy,
       },
     });
-    if (!workspace) {
+    if (!actorMember) {
       return getModifyDataResult({
         notFound: true,
       });
@@ -201,8 +201,8 @@ class WorkspaceMembersService {
     if (
       !checkUserPermissions({
         type: "organizationAndWorkspace",
-        organizationRole: workspace.organizationRole,
-        workspaceRole: workspace.role,
+        organizationRole: actorMember.organizationRole,
+        workspaceRole: actorMember.role,
         rolePermission: "workspace_member:create",
       })
     )
@@ -215,7 +215,7 @@ class WorkspaceMembersService {
         filters: {
           userId: newMemberUserId,
           selectorUserId: addedBy,
-          organizationId: workspace.organizationId,
+          organizationId: actorMember.organizationId,
         },
       });
     if (!targetOrganizationMember)
@@ -244,19 +244,19 @@ class WorkspaceMembersService {
     memberUserId: string;
     updatedBy: string;
   }): Promise<ModifyWorkspaceMemberResult> {
-    const workspaceService = new WorkspacesService(this.db);
-    const workspace = await workspaceService.getWorkspace({
+    const actorMember = await this.getWorkspaceMemberNP({
       filters: {
         workspaceId,
+        selectorUserId: updatedBy,
         userId: updatedBy,
       },
     });
-    if (!workspace) return getModifyDataResult({ notFound: true });
+    if (!actorMember) return getModifyDataResult({ notFound: true });
     if (
       !checkUserPermissions({
         type: "organizationAndWorkspace",
-        organizationRole: workspace.organizationRole,
-        workspaceRole: workspace.role,
+        organizationRole: actorMember.organizationRole,
+        workspaceRole: actorMember.role,
         rolePermission: "workspace_member:update",
       })
     )
@@ -285,14 +285,14 @@ class WorkspaceMembersService {
     memberUserId: string;
     deletedBy: string;
   }): Promise<ModifyWorkspaceMemberResult> {
-    const workspaceService = new WorkspacesService(this.db);
-    const workspace = await workspaceService.getWorkspace({
+    const actorMember = await this.getWorkspaceMemberNP({
       filters: {
         workspaceId,
+        selectorUserId: deletedBy,
         userId: deletedBy,
       },
     });
-    if (!workspace)
+    if (!actorMember)
       return getModifyDataResult({
         notFound: true,
       });
@@ -300,8 +300,8 @@ class WorkspaceMembersService {
     if (
       !checkUserPermissions({
         type: "organizationAndWorkspace",
-        organizationRole: workspace.organizationRole,
-        workspaceRole: workspace.role,
+        organizationRole: actorMember.organizationRole,
+        workspaceRole: actorMember.role,
         rolePermission: "workspace_member:delete",
       })
     )

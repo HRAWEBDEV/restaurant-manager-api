@@ -11,7 +11,6 @@ import type { DBExecuter } from "../db/connect";
 import { organizations } from "../db/schemas/organizations";
 import { user } from "../../auth-schema";
 import { checkUserPermissions } from "../middlewares/checkUserPermissionsMiddleware";
-import { OrganizationsService } from "./organizationsService";
 import { z } from "@hono/zod-openapi";
 import {
   getModifyDataResult,
@@ -109,18 +108,18 @@ class OrganizationMembersService {
   async getOrganizationMembers(
     props: GetOrganizationMembersProps,
   ): Promise<GetOrganizationMembersResult> {
-    const organizationService = new OrganizationsService(this.db);
-    const organization = await organizationService.getOrganization({
+    const selector = await this.getOrganizationMemberNP({
       filters: {
         userId: props.filters.selectorUserId,
         organizationId: props.filters.organizationId,
+        selectorUserId: props.filters.selectorUserId,
       },
     });
     if (
-      !organization ||
+      !selector ||
       !checkUserPermissions({
         type: "organization",
-        organizationRole: organization.role,
+        organizationRole: selector.role,
         rolePermission: "organization_member:read",
       })
     )

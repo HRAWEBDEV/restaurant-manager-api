@@ -331,4 +331,4 @@ class WorkspaceMembersService {
   }
 }
 
-export { WorkspaceMembersService };
+export { WorkspaceMembersService, getWorkspaceMembersSchema };

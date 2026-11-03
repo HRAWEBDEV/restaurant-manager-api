@@ -278,4 +278,4 @@ class OrganizationMembersService {
   }
 }
 
-export { OrganizationMembersService };
+export { OrganizationMembersService, getOrganizationMembersSchema };

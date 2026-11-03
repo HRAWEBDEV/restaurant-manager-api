@@ -9,6 +9,10 @@ import {
   type AuthContext,
 } from "../../../../utils/AuthContext";
 import {
+  WorkspaceMembersService,
+  getWorkspaceMembersSchema,
+} from "../../../../services/workspaceMembersService";
+import {
   WorkspacesService,
   getWorkspacesSchema,
 } from "../../../../services/workspacesService";
@@ -143,5 +147,54 @@ const handleUpdateWorkspaces: RouteHandler<
 };
 
 workspacesRoutes.openapi(updateWorkspacesRoute, handleUpdateWorkspaces);
+
+// members
+
+const getWorkspaceMembersRoute = createRoute({
+  method: "get",
+  path: "/{id}/members",
+  tags: ["Workspaces"],
+  description: "workspace members",
+  request: {
+    params: z.object({
+      id: z.string().openapi({
+        param: {
+          name: "id",
+          in: "path",
+        },
+      }),
+    }),
+  },
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: getWorkspaceMembersSchema,
+        },
+      },
+    },
+  },
+});
+
+const handleGetWorkspaceMembers: RouteHandler<
+  typeof getWorkspaceMembersRoute,
+  {
+    Variables: AuthContext;
+  }
+> = async (c) => {
+  const user = getContextUser(c);
+  const { id } = c.req.valid("param");
+  const workspaceMembersService = new WorkspaceMembersService(db);
+  const result = await workspaceMembersService.getWorkspaceMembers({
+    filters: {
+      selectorUserId: user.id,
+      workspaceId: id,
+      userId: user.id,
+    },
+  });
+  return c.json(result, 200);
+};
+
+workspacesRoutes.openapi(getWorkspaceMembersRoute, handleGetWorkspaceMembers);
 
 export { workspacesRoutes };

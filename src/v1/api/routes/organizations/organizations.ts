@@ -12,6 +12,10 @@ import {
   OrganizationsService,
   getOrganizationsSchema,
 } from "../../../../services/organizationsService";
+import {
+  OrganizationMembersService,
+  getOrganizationMembersSchema,
+} from "../../../../services/organizationMembers";
 import { db } from "../../../../db/connect";
 import {
   apiErrorShapeSchema,
@@ -272,5 +276,56 @@ const handleGetOrganizations: RouteHandler<
 };
 
 organizationsRoutes.openapi(getOrganizationsRoute, handleGetOrganizations);
+
+// members
+const getOrganizationMembersRoute = createRoute({
+  method: "get",
+  path: "/{id}/members",
+  tags: ["Organizations"],
+  description: "organization members",
+  request: {
+    params: z.object({
+      id: z.string().openapi({
+        param: {
+          name: "id",
+          in: "path",
+        },
+      }),
+    }),
+  },
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: getOrganizationMembersSchema,
+        },
+      },
+    },
+  },
+});
+
+const handleGetOrganizationMembers: RouteHandler<
+  typeof getOrganizationMembersRoute,
+  {
+    Variables: AuthContext;
+  }
+> = async (c) => {
+  const user = getContextUser(c);
+  const { id } = c.req.valid("param");
+  const organizationMembersService = new OrganizationMembersService(db);
+  const result = await organizationMembersService.getOrganizationMembers({
+    filters: {
+      organizationId: id,
+      selectorUserId: user.id,
+    },
+  });
+
+  return c.json(result, 200);
+};
+
+organizationsRoutes.openapi(
+  getOrganizationMembersRoute,
+  handleGetOrganizationMembers,
+);
 
 export { organizationsRoutes };

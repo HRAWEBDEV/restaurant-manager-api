@@ -127,7 +127,7 @@ class WorkspacesService {
       !checkUserPermissions({
         type: "organization",
         organizationRole: organization.userRole,
-        rolePermission: "workspace:delete",
+        rolePermission: "workspace:create",
       })
     )
       return undefined;
@@ -174,7 +174,7 @@ class WorkspacesService {
       !checkUserPermissions({
         type: "organization",
         organizationRole: currentWorkspace.organizationRole,
-        rolePermission: "workspace:delete",
+        rolePermission: "workspace:update",
       })
     )
       return undefined;
@@ -198,35 +198,25 @@ class WorkspacesService {
   }
   async deleteWorkspace({
     id,
-    organizationId,
     userId,
-  }: Pick<Workspace, "id" | "organizationId"> & {
+  }: Pick<Workspace, "id"> & {
     userId: string;
   }) {
-    const organizationService = new OrganizationsService(this.db);
-    const organization = await organizationService.getOrganization({
-      filters: {
-        organizationId,
-        userId,
-      },
+    const currentWorkspace = await this.getWorkspace({
+      filters: { userId, workspaceId: id },
     });
     if (
-      !organization ||
+      !currentWorkspace ||
       !checkUserPermissions({
         type: "organization",
-        organizationRole: organization.userRole,
+        organizationRole: currentWorkspace.organizationRole,
         rolePermission: "workspace:delete",
       })
     )
       return;
     const [deletedWorkspace] = await this.db
       .delete(workspaces)
-      .where(
-        and(
-          eq(workspaces.id, id),
-          eq(workspaces.organizationId, organizationId),
-        ),
-      )
+      .where(and(eq(workspaces.id, id)))
       .returning({
         id: workspaces.id,
       });

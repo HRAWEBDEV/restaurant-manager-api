@@ -1,15 +1,17 @@
 import { eq, and, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
-import type { DBExecuter } from "../db/connect";
+import { db, type DBExecuter } from "../db/connect";
 import { user } from "../../auth-schema";
 import {
   workspaceMembers,
   type InsertWorkspaceMember,
   type WorkspaceMember,
 } from "../db/schemas/workspaceMembers";
+import { OrganizationMembersService } from "./organizationMembers";
 import { workspaces } from "../db/schemas/workspaces";
 import { organizationMembers } from "../db/schemas/organizationMembers";
 import { organizations } from "../db/schemas/organizations";
+import { checkUserPermissions } from "../middlewares/checkUserPermissionsMiddleware";
 
 class WorkspaceMembersService {
   constructor(private readonly db: DBExecuter) {}
@@ -100,10 +102,29 @@ class WorkspaceMembersService {
     workspaceId,
     role,
     addedBy,
+    organizationId,
   }: Pick<
     InsertWorkspaceMember,
-    "organizationMemberId" | "workspaceId" | "role" | "addedBy"
-  >) {
+    "organizationMemberId" | "workspaceId" | "role"
+  > & {
+    organizationId: string;
+    addedBy: string;
+  }) {
+    const organizationMemberSerive = new OrganizationMembersService(db);
+    const organizationMember =
+      await organizationMemberSerive.getOrganizationMember(
+        organizationId,
+        addedBy,
+      );
+    if (
+      !organizationMember ||
+      !checkUserPermissions({
+        type: "organization",
+        organizationRole: organizationMember.role,
+        rolePermission: "workspace_member:create",
+      })
+    )
+      return;
     const [createdWorkspaceMember] = await this.db
       .insert(workspaceMembers)
       .values({
@@ -115,7 +136,6 @@ class WorkspaceMembersService {
       .returning({ id: workspaceMembers.id });
     return createdWorkspaceMember;
   }
-
   async updateWorkspaceMember({
     id,
     role,

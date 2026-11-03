@@ -38,7 +38,10 @@ export const workspaceMiddleware: MiddlewareHandler<{
         userId: user.id,
       },
     });
-    if (!member) {
+    if (
+      !member ||
+      member.organizationId !== organizationMember.organizationId
+    ) {
       c.status(StatusCodes.FORBIDDEN);
       return c.json(
         getApiErrorShape({

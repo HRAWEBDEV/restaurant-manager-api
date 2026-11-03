@@ -12,6 +12,7 @@ import { workspaces } from "../db/schemas/workspaces";
 import { organizationMembers } from "../db/schemas/organizationMembers";
 import { organizations } from "../db/schemas/organizations";
 import { checkUserPermissions } from "../middlewares/checkUserPermissionsMiddleware";
+import { workspaceRoles } from "../db/schemas/workspaceMembers";
 
 class WorkspaceMembersService {
   constructor(private readonly db: DBExecuter) {}
@@ -29,7 +30,7 @@ class WorkspaceMembersService {
         id: workspaceMembers.id,
         workspaceId: workspaces.id,
         organizationMemberId: organizationMembers.id,
-        role: sql<string>`
+        role: sql<(typeof workspaceRoles)[number]>`
           CASE
             WHEN ${organizationMembers.role} = ${"owner"}
               THEN ${"admin"}::text

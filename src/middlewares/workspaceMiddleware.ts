@@ -30,10 +30,12 @@ export const workspaceMiddleware: MiddlewareHandler<{
     setContextUserWorkspaceMemberRole(c, "admin");
   } else {
     const worksapceMemberService = new WorkspaceMembersService(db);
-    const member = await worksapceMemberService.getWorkspaceMember(
-      workspaceId,
-      organizationMember.id,
-    );
+    const member = await worksapceMemberService.getWorkspaceMember({
+      filters: {
+        workspaceId,
+        organizationMemberId: organizationMember.id,
+      },
+    });
     if (!member) {
       c.status(StatusCodes.FORBIDDEN);
       return c.json(

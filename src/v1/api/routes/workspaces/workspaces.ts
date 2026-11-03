@@ -8,12 +8,10 @@ import {
   getContextUser,
   type AuthContext,
 } from "../../../../utils/AuthContext";
-import { OrganizationMembersService } from "../../../../services/organizationMembers";
 import {
   WorkspacesService,
   getWorkspacesResultSchema,
 } from "../../../../services/workspacesService";
-import { WorkspaceMembersService } from "../../../../services/workspaceMembersService";
 import {
   insertWorkspaceSchema,
   updateWorkspaceSchema,

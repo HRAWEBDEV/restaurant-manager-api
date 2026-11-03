@@ -5,6 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "NODE_ENV=development bun run --watch --check ./src/index.ts",
+    "typecheck": "bunx tsc --noEmit",
     "db:generate": "bunx --bun drizzle-kit generate",
     "db:migrate": "bunx --bun drizzle-kit migrate",
     "auth:generate": "bun x --bun auth@latest generate"

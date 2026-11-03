@@ -22,6 +22,10 @@ import {
   getOrganizationsSchema,
 } from "../../../../services/organizationsService";
 import { db } from "../../../../db/connect";
+import {
+  getWorkspacesSchema,
+  WorkspacesService,
+} from "../../../../services/workspacesService";
 
 const usersRoutes = new OpenAPIHono<{
   Variables: AuthContext;
@@ -279,5 +283,39 @@ const handleGetUserOrganizations: RouteHandler<
   return c.json(result, 200);
 };
 usersRoutes.openapi(userOrganizationsRoute, handleGetUserOrganizations);
+
+const getUserWorkspacesRoute = createRoute({
+  method: "get",
+  path: "/workspaces",
+  tags: ["Users"],
+  description: "user workspaces",
+  request: {},
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: getWorkspacesSchema,
+        },
+      },
+    },
+  },
+});
+
+const handleGetUserWorkspaces: RouteHandler<
+  typeof getUserWorkspacesRoute,
+  {
+    Variables: AuthContext;
+  }
+> = async (c) => {
+  const user = getContextUser(c);
+  const workspaceService = new WorkspacesService(db);
+  const result = await workspaceService.getWorkspaces({
+    filters: {
+      userId: user.id,
+    },
+  });
+  return c.json(result, 200);
+};
+usersRoutes.openapi(getUserWorkspacesRoute, handleGetUserWorkspaces);
 
 export { usersRoutes };

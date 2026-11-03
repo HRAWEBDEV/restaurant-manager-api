@@ -36,7 +36,6 @@ class AccountServices {
       const createdWorkspaceMember =
         await workspaceMemberService.createWorkspaceMember({
           newMemberUserId: userId,
-          organizationId: createdOrganization.data!.id!,
           workspaceId: createdWorkspace.data!.id!,
           type: "systematic",
           role: "admin",

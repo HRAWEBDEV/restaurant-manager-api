@@ -48,16 +48,29 @@ const workspaceMembers = snakeCase.table(
   ],
 );
 
-const { createInsertSchema, createSelectSchema } = createSchemaFactory({
-  zodInstance: z,
-});
+const { createInsertSchema, createSelectSchema, createUpdateSchema } =
+  createSchemaFactory({
+    zodInstance: z,
+  });
 const selectWorkspaceMemberSchema = createSelectSchema(workspaceMembers);
-const insertWorkspaceMember = createInsertSchema(workspaceMembers);
+const insertWorkspaceMemberSchema = createInsertSchema(workspaceMembers, {
+  role: z.enum(workspaceRoles),
+}).omit({
+  id: true,
+  joinedAt: true,
+});
+const upadteWorkspaceMemberSchema = createUpdateSchema(workspaceMembers, {
+  role: z.enum(workspaceRoles),
+}).pick({
+  id: true,
+  role: true,
+});
 
 export type { WorkspaceMember, InsertWorkspaceMember };
 export {
   workspaceMembers,
   selectWorkspaceMemberSchema,
-  insertWorkspaceMember,
+  insertWorkspaceMemberSchema,
+  upadteWorkspaceMemberSchema,
   workspaceRoles,
 };

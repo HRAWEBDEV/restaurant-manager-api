@@ -4,9 +4,9 @@ import { type DBExecuter } from "../db/connect";
 import { user } from "../../auth-schema";
 import {
   workspaceMembers,
-  type InsertWorkspaceMember,
-  type WorkspaceMember,
   selectWorkspaceMemberSchema,
+  upadteWorkspaceMemberSchema as defaultUpdateWorkspaceMemberSchema,
+  insertWorkspaceMemberSchema as defaultInsertWorkspaceMemberSchema,
 } from "../db/schemas/workspaceMembers";
 import { OrganizationMembersService } from "./organizationMembers";
 import { workspaces } from "../db/schemas/workspaces";
@@ -45,6 +45,15 @@ const getWorkspaceMembersSchema = z.object({
       organizationRole: z.enum(ogMemberRoles),
     })
     .array(),
+});
+
+const updateWorkspaceMemberSchema = defaultUpdateWorkspaceMemberSchema.extend({
+  memberUserId: z.string(),
+  workspaceId: z.string(),
+  updatedBy: z.string(),
+});
+const insertWorkspaceMemberSchema = defaultInsertWorkspaceMemberSchema.extend({
+  newMemberUserId: z.string(),
 });
 
 type GetWorkspaceMembers = z.infer<typeof getWorkspaceMembersSchema>;
@@ -181,10 +190,8 @@ class WorkspaceMembersService {
     workspaceId,
     role,
     ...props
-  }: Pick<InsertWorkspaceMember, "workspaceId" | "role"> & {
-    newMemberUserId: string;
-    organizationId: string;
-  } & (
+  }: z.infer<typeof insertWorkspaceMemberSchema> &
+    (
       | {
           type: "manually";
           addedBy: string;
@@ -252,14 +259,13 @@ class WorkspaceMembersService {
     });
   }
   async updateWorkspaceMember({
-    memberUserId,
     role,
+    memberUserId,
     workspaceId,
     updatedBy,
-  }: Pick<WorkspaceMember, "role" | "workspaceId"> & {
-    memberUserId: string;
-    updatedBy: string;
-  }): Promise<ModifyWorkspaceMemberResult> {
+  }: z.infer<
+    typeof updateWorkspaceMemberSchema
+  >): Promise<ModifyWorkspaceMemberResult> {
     const actorMember = await this.getWorkspaceMemberNP({
       filters: {
         workspaceId,
@@ -297,7 +303,8 @@ class WorkspaceMembersService {
     memberUserId,
     workspaceId,
     deletedBy,
-  }: Pick<WorkspaceMember, "workspaceId"> & {
+  }: {
+    workspaceId: string;
     memberUserId: string;
     deletedBy: string;
   }): Promise<ModifyWorkspaceMemberResult> {
